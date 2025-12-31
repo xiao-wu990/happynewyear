@@ -118,7 +118,8 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            animation: fireworkExplode 2s ease-out forwards;
+            animation: fireworkExplode 1.5s ease-out forwards;
+            box-shadow: 0 0 20px currentColor;
         }
         
         @keyframes fireworkExplode {
@@ -128,9 +129,10 @@
             }
             10% {
                 opacity: 1;
+                transform: translate(var(--startX), var(--startY)) scale(1.5);
             }
             100% {
-                transform: translate(var(--endX), var(--endY)) scale(1);
+                transform: translate(var(--endX), var(--endY)) scale(0.5);
                 opacity: 0;
             }
         }
@@ -384,10 +386,10 @@
             text-shadow: 0 0 25px rgba(51, 204, 255, 0.6);
         }
         
-        /* 信封按钮 - 修复位置 */
+        /* 信封按钮 */
         .envelope-container {
             position: fixed;
-            bottom: 30vh; /* 改为视口高度百分比，适配不同设备 */
+            bottom: 30vh;
             left: 50%;
             transform: translateX(-50%);
             z-index: 2200;
@@ -665,6 +667,9 @@
             box-shadow: 
                 0 40px 80px rgba(0, 0, 0, 0.7),
                 0 0 250px rgba(51, 204, 255, 0.5);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .admin-title {
@@ -745,13 +750,21 @@
             box-shadow: 0 15px 35px rgba(51, 204, 255, 0.4);
         }
         
-        /* 管理员控制按钮区域 */
+        /* 管理员按钮容器 - 固定位置 */
         .admin-control-buttons {
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
             margin-top: 30px;
+            position: sticky;
+            bottom: 20px;
+            background: rgba(15, 15, 35, 0.9);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
         }
         
         .admin-btn {
@@ -771,6 +784,7 @@
             border: none;
             color: white;
             min-width: 180px;
+            flex: 1;
         }
         
         .admin-btn-primary {
@@ -841,6 +855,10 @@
             .welcome-title { font-size: 3.5rem; }
             .countdown-title { font-size: 2.5rem; }
             .envelope-container { bottom: 20vh; }
+            .admin-control-buttons {
+                position: relative;
+                bottom: 0;
+            }
         }
         
         @media (max-width: 768px) {
@@ -853,6 +871,9 @@
             .envelope-container { 
                 bottom: 15vh; 
                 max-width: 90%;
+            }
+            .admin-content {
+                padding: 50px 40px;
             }
             .admin-control-buttons {
                 flex-direction: column;
@@ -882,33 +903,11 @@
                 margin-bottom: 20px;
             }
             .admin-content {
-                padding: 50px 30px;
+                padding: 40px 30px;
             }
-        }
-        
-        @media (max-width: 400px) {
-            .envelope-container { 
-                bottom: 8vh;
-            }
-            .envelope-btn {
-                padding: 18px 40px;
+            .admin-btn {
+                padding: 16px 30px;
                 font-size: 1.1rem;
-            }
-        }
-        
-        /* 超小屏幕适配 */
-        @media (max-height: 700px) {
-            .envelope-container {
-                bottom: 5vh;
-            }
-        }
-        
-        @media (max-height: 600px) {
-            .envelope-container {
-                position: relative;
-                margin-top: 50px;
-                bottom: auto;
-                transform: translateX(-50%);
             }
         }
     </style>
@@ -1097,29 +1096,18 @@
                     <input type="number" id="adminMinute" class="time-input" placeholder="分" value="59" min="0" max="59">
                     <input type="number" id="adminSecond" class="time-input" placeholder="秒" value="59" min="0" max="59">
                 </div>
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px;">
-                    <button class="btn" id="setTimeBtn" style="padding: 20px 40px;">
-                        <i class="fas fa-play"></i> 设置时间
-                    </button>
-                    <button class="btn" id="resetTimeBtn" style="padding: 20px 40px; background: rgba(255,255,255,0.15);">
-                        <i class="fas fa-redo"></i> 重置时间
-                    </button>
-                    <button class="btn" id="triggerNewYearBtn" style="padding: 20px 40px; background: linear-gradient(135deg, #FFCC00, #FF3366);">
-                        <i class="fas fa-fire"></i> 触发新年特效
-                    </button>
-                </div>
             </div>
             
-            <!-- 管理员专用返回主页按钮 -->
+            <!-- 管理员控制按钮 - 固定在底部 -->
             <div class="admin-control-buttons">
-                <button class="admin-btn admin-btn-primary" id="adminBackToMainBtn">
-                    <i class="fas fa-home"></i> 返回主页
+                <button class="admin-btn admin-btn-primary" id="setTimeBtn">
+                    <i class="fas fa-play"></i> 设置时间
                 </button>
-                <button class="admin-btn admin-btn-secondary" id="adminTestEffectsBtn">
-                    <i class="fas fa-magic"></i> 测试特效
+                <button class="admin-btn admin-btn-secondary" id="resetTimeBtn">
+                    <i class="fas fa-redo"></i> 重置时间
                 </button>
-                <button class="admin-btn admin-btn-danger" id="adminResetAllBtn">
-                    <i class="fas fa-trash"></i> 重置所有数据
+                <button class="admin-btn admin-btn-danger" id="triggerNewYearBtn">
+                    <i class="fas fa-fire"></i> 触发特效
                 </button>
             </div>
             
@@ -1147,7 +1135,7 @@
                 this.textPositions = [];
                 this.currentText = '';
                 this.isAnimating = false;
-                this.particleCount = 1000;
+                this.particleCount = 1500; // 更多粒子
                 this.textSize = 90;
                 this.texts = [];
                 this.currentTextIndex = 0;
@@ -1206,9 +1194,9 @@
                 const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
                 this.textPositions = [];
                 
-                // 收集文字像素位置（采样密度降低）
-                for (let y = 0; y < offscreenCanvas.height; y += 4) {
-                    for (let x = 0; x < offscreenCanvas.width; x += 4) {
+                // 收集文字像素位置（采样密度增加）
+                for (let y = 0; y < offscreenCanvas.height; y += 3) {
+                    for (let x = 0; x < offscreenCanvas.width; x += 3) {
                         const alpha = imageData.data[(y * offscreenCanvas.width + x) * 4 + 3];
                         if (alpha > 128) {
                             this.textPositions.push({
@@ -1219,8 +1207,8 @@
                     }
                 }
                 
-                // 创建粒子
-                const colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#9966FF'];
+                // 创建粒子 - 粒子大小减小
+                const colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#9966FF', '#FF00FF'];
                 
                 for (let i = 0; i < this.particleCount; i++) {
                     const targetPos = this.textPositions[Math.floor(Math.random() * this.textPositions.length)];
@@ -1233,13 +1221,14 @@
                         y: startY,
                         targetX: targetPos ? targetPos.x : x,
                         targetY: targetPos ? targetPos.y : y,
-                        size: Math.random() * 2 + 1,
+                        size: Math.random() * 1.5 + 0.5, // 更小的粒子
                         color: color,
-                        speed: Math.random() * 4 + 1,
+                        speed: Math.random() * 3 + 1,
                         vx: 0,
                         vy: 0,
                         arrived: false,
-                        opacity: 1
+                        opacity: 1,
+                        originalSize: Math.random() * 1.5 + 0.5
                     });
                 }
                 
@@ -1256,9 +1245,9 @@
                 for (let particle of this.particles) {
                     if (this.isClearing) {
                         // 清除模式：粒子散开
-                        particle.vx += (Math.random() - 0.5) * 5;
-                        particle.vy += (Math.random() - 0.5) * 5;
-                        particle.opacity -= 0.02;
+                        particle.vx += (Math.random() - 0.5) * 8;
+                        particle.vy += (Math.random() - 0.5) * 8;
+                        particle.opacity -= 0.03;
                         
                         if (particle.opacity <= 0) {
                             particle.arrived = true;
@@ -1269,10 +1258,10 @@
                         const dy = particle.targetY - particle.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 2) {
+                        if (distance > 1.5) {
                             const angle = Math.atan2(dy, dx);
-                            particle.vx = Math.cos(angle) * particle.speed * 0.1;
-                            particle.vy = Math.sin(angle) * particle.speed * 0.1;
+                            particle.vx = Math.cos(angle) * particle.speed * 0.15;
+                            particle.vy = Math.sin(angle) * particle.speed * 0.15;
                             
                             particle.x += particle.vx;
                             particle.y += particle.vy;
@@ -1292,13 +1281,13 @@
                         // 发光效果
                         const gradient = this.ctx.createRadialGradient(
                             particle.x, particle.y, 0,
-                            particle.x, particle.y, particle.size * 5
+                            particle.x, particle.y, particle.size * 6
                         );
                         gradient.addColorStop(0, particle.color + 'FF');
                         gradient.addColorStop(1, particle.color + '00');
                         
                         this.ctx.beginPath();
-                        this.ctx.arc(particle.x, particle.y, particle.size * 5, 0, Math.PI * 2);
+                        this.ctx.arc(particle.x, particle.y, particle.size * 6, 0, Math.PI * 2);
                         this.ctx.fillStyle = gradient;
                         this.ctx.fill();
                         this.ctx.globalAlpha = 1;
@@ -1326,18 +1315,21 @@
         class FireworkSystem {
             constructor() {
                 this.container = document.getElementById('fireworkOverlay');
-                this.colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#FF00FF', '#FF9900', '#33FFCC'];
+                this.colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#FF00FF', '#FF9900', '#33FFCC', '#FF33FF', '#33FF33'];
+                this.fireworkCount = 0;
             }
             
-            createFirework(x, y, count = 80) {
+            createFirework(x, y, count = 120) { // 更多粒子
                 for (let i = 0; i < count; i++) {
                     const firework = document.createElement('div');
                     firework.className = 'firework';
                     
                     const angle = Math.random() * Math.PI * 2;
-                    const distance = Math.random() * 250 + 50;
+                    const distance = Math.random() * 350 + 100; // 更远的距离
                     const endX = Math.cos(angle) * distance;
                     const endY = Math.sin(angle) * distance;
+                    const size = Math.random() * 8 + 4; // 更大的粒子
+                    const duration = Math.random() * 1 + 1.5; // 更长的动画
                     
                     firework.style.cssText = `
                         --startX: 0px;
@@ -1347,9 +1339,10 @@
                         background: ${this.colors[Math.floor(Math.random() * this.colors.length)]};
                         left: ${x}px;
                         top: ${y}px;
-                        width: ${Math.random() * 6 + 4}px;
-                        height: ${Math.random() * 6 + 4}px;
-                        animation-duration: ${Math.random() * 0.8 + 1.2}s;
+                        width: ${size}px;
+                        height: ${size}px;
+                        animation-duration: ${duration}s;
+                        box-shadow: 0 0 30px ${this.colors[Math.floor(Math.random() * this.colors.length)]};
                     `;
                     
                     this.container.appendChild(firework);
@@ -1359,41 +1352,101 @@
                         if (firework.parentNode === this.container) {
                             this.container.removeChild(firework);
                         }
-                    }, 2000);
+                    }, duration * 1000);
                 }
+                
+                // 播放爆炸音效（如果有）
+                this.playExplosionSound();
             }
             
-            createMultipleFireworks(count = 8) {
+            playExplosionSound() {
+                // 可以添加爆炸音效
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ');
+                    audio.volume = 0.3;
+                    audio.play().catch(() => {});
+                } catch (e) {}
+            }
+            
+            createMultipleFireworks(count = 12) { // 更多烟花
                 for (let i = 0; i < count; i++) {
-                    const delay = i * 250;
+                    const delay = i * 200;
                     setTimeout(() => {
                         const x = Math.random() * window.innerWidth;
-                        const y = Math.random() * window.innerHeight;
-                        this.createFirework(x, y, 100);
+                        const y = Math.random() * window.innerHeight * 0.6;
+                        this.createFirework(x, y, 150); // 每个烟花更多粒子
                     }, delay);
                 }
             }
             
             startFireworks() {
                 this.container.classList.add('active');
+                this.fireworkCount = 0;
                 
-                // 创建初始烟花
-                this.createMultipleFireworks(10);
+                // 创建初始烟花 - 更多更密集
+                this.createMultipleFireworks(15);
                 
-                // 持续创建烟花
+                // 持续创建烟花 - 更频繁
                 this.fireworkInterval = setInterval(() => {
-                    this.createMultipleFireworks(4);
-                }, 1000);
+                    this.createMultipleFireworks(6);
+                    this.fireworkCount++;
+                    
+                    // 每5次烟花后创建一次超级烟花
+                    if (this.fireworkCount % 5 === 0) {
+                        this.createSuperFirework();
+                    }
+                    
+                    // 每10次烟花后创建一次礼花
+                    if (this.fireworkCount % 10 === 0) {
+                        this.createConfettiBurst();
+                    }
+                }, 800); // 更频繁
                 
                 // 定期创建礼花
                 this.confettiInterval = setInterval(() => {
-                    confetti({
-                        particleCount: 200,
-                        spread: 120,
-                        origin: { y: 0.6 },
-                        colors: this.colors
-                    });
-                }, 3000);
+                    this.createConfettiBurst();
+                }, 2500); // 更频繁的礼花
+            }
+            
+            createSuperFirework() {
+                const x = window.innerWidth / 2;
+                const y = window.innerHeight / 3;
+                
+                // 创建中心烟花
+                this.createFirework(x, y, 200);
+                
+                // 创建环绕烟花
+                setTimeout(() => {
+                    for (let i = 0; i < 8; i++) {
+                        const angle = (i * Math.PI) / 4;
+                        const distance = 200;
+                        const childX = x + Math.cos(angle) * distance;
+                        const childY = y + Math.sin(angle) * distance;
+                        
+                        setTimeout(() => {
+                            this.createFirework(childX, childY, 100);
+                        }, i * 100);
+                    }
+                }, 300);
+            }
+            
+            createConfettiBurst() {
+                // 多种礼花效果
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 300, // 更多粒子
+                            spread: 150, // 更广的扩散
+                            origin: { 
+                                x: Math.random() * 0.6 + 0.2,
+                                y: Math.random() * 0.4 + 0.3
+                            },
+                            colors: this.colors,
+                            shapes: ['circle', 'square'], // 多种形状
+                            scalar: 1.2 // 更大
+                        });
+                    }, i * 300);
+                }
             }
             
             stopFireworks() {
@@ -1506,13 +1559,13 @@
             
             createStarfield() {
                 const starfield = document.getElementById('starfield');
-                for (let i = 0; i < 250; i++) {
+                for (let i = 0; i < 300; i++) { // 更多星星
                     const star = document.createElement('div');
                     star.className = 'star';
                     star.style.left = `${Math.random() * 100}%`;
                     star.style.top = `${Math.random() * 100}%`;
-                    star.style.width = star.style.height = `${Math.random() * 2.5 + 1}px`;
-                    star.style.opacity = Math.random() * 0.5 + 0.3;
+                    star.style.width = star.style.height = `${Math.random() * 3 + 1}px`;
+                    star.style.opacity = Math.random() * 0.7 + 0.3;
                     star.style.setProperty('--duration', `${Math.random() * 5 + 3}s`);
                     starfield.appendChild(star);
                 }
@@ -1521,14 +1574,14 @@
             initParticles() {
                 particlesJS('particles-js', {
                     particles: {
-                        number: { value: 70, density: { enable: true, value_area: 800 } },
+                        number: { value: 100, density: { enable: true, value_area: 800 } },
                         color: { value: ["#FF3366", "#33CCFF", "#FFCC00"] },
                         shape: { type: "circle" },
                         opacity: { value: 0.4, random: true },
                         size: { value: 2, random: true },
                         move: {
                             enable: true,
-                            speed: 1.5,
+                            speed: 2,
                             direction: "none",
                             random: true
                         }
@@ -1546,13 +1599,10 @@
                 
                 // 管理员功能
                 this.initAdminAccess();
-                document.getElementById('setTimeBtn').addEventListener('click', () => this.setManualTime());
-                document.getElementById('resetTimeBtn').addEventListener('click', () => this.resetToRealTime());
-                document.getElementById('triggerNewYearBtn').addEventListener('click', () => this.triggerNewYearEffects());
+                document.getElementById('setTimeBtn').addEventListener('click', () => this.setManualTimeAndReturn());
+                document.getElementById('resetTimeBtn').addEventListener('click', () => this.resetTimeAndReturn());
+                document.getElementById('triggerNewYearBtn').addEventListener('click', () => this.triggerNewYearEffectsFromAdmin());
                 document.getElementById('closeAdminBtn').addEventListener('click', () => this.closeAdminPanel());
-                document.getElementById('adminBackToMainBtn').addEventListener('click', () => this.adminBackToMain());
-                document.getElementById('adminTestEffectsBtn').addEventListener('click', () => this.adminTestEffects());
-                document.getElementById('adminResetAllBtn').addEventListener('click', () => this.adminResetAll());
             }
             
             initAdminAccess() {
@@ -1757,7 +1807,7 @@
             }
             
             prepareAudio() {
-                this.audio.volume = 0.7;
+                this.audio.volume = 0.8; // 更大音量
                 this.audio.preload = 'auto';
                 this.audio.loop = true;
                 
@@ -1799,16 +1849,17 @@
                 
                 this.playAudio();
                 
+                // 更震撼的粒子背景
                 particlesJS('particles-js', {
                     particles: {
-                        number: { value: 300, density: { enable: true, value_area: 800 } },
-                        color: { value: ["#FF3366", "#33CCFF", "#FFCC00", "#00CC88", "#FF00FF"] },
+                        number: { value: 400, density: { enable: true, value_area: 800 } },
+                        color: { value: ["#FF3366", "#33CCFF", "#FFCC00", "#00CC88", "#FF00FF", "#FF9900"] },
                         shape: { type: "circle" },
-                        opacity: { value: 0.8, random: true, anim: { enable: true, speed: 2 } },
-                        size: { value: 4, random: true },
+                        opacity: { value: 0.9, random: true, anim: { enable: true, speed: 3 } },
+                        size: { value: 5, random: true },
                         line_linked: { enable: false },
                         move: {
-                            enable: true, speed: 6, direction: "none",
+                            enable: true, speed: 8, direction: "none",
                             random: true, straight: false, out_mode: "out"
                         }
                     }
@@ -1911,9 +1962,69 @@
                 }
             }
             
-            adminBackToMain() {
+            // 设置时间并返回主页
+            setManualTimeAndReturn() {
+                const year = parseInt(document.getElementById('adminYear').value) || 2025;
+                const month = parseInt(document.getElementById('adminMonth').value) - 1 || 11;
+                const day = parseInt(document.getElementById('adminDay').value) || 31;
+                const hour = parseInt(document.getElementById('adminHour').value) || 23;
+                const minute = parseInt(document.getElementById('adminMinute').value) || 59;
+                const second = parseInt(document.getElementById('adminSecond').value) || 59;
+                
+                this.manualDateTime = new Date(year, month, day, hour, minute, second);
+                this.isManualTime = true;
+                this.fireworkActive = false;
+                
+                // 关闭管理员面板
                 this.closeAdminPanel();
                 
+                // 返回主页
+                this.returnToMain();
+                
+                this.showNotification(`时间已设置为 ${year}年${month+1}月${day}日 ${hour}:${minute}:${second}`, 'success');
+                
+                // 如果设置到23:59:40，计算音频播放时间
+                if (hour === 23 && minute === 59 && second === 40) {
+                    setTimeout(() => this.playAudio(), 4000);
+                } else if (hour === 23 && minute === 59 && second < 44) {
+                    const timeTo44 = 44 - second;
+                    setTimeout(() => this.playAudio(), timeTo44 * 1000);
+                }
+            }
+            
+            // 重置时间并返回主页
+            resetTimeAndReturn() {
+                this.isManualTime = false;
+                this.manualDateTime = null;
+                this.fireworkActive = false;
+                
+                // 关闭管理员面板
+                this.closeAdminPanel();
+                
+                // 返回主页
+                this.returnToMain();
+                
+                this.showNotification('已恢复真实时间', 'info');
+            }
+            
+            // 触发特效并返回主页
+            triggerNewYearEffectsFromAdmin() {
+                // 关闭管理员面板
+                this.closeAdminPanel();
+                
+                // 返回主页
+                this.returnToMain();
+                
+                // 触发特效
+                setTimeout(() => {
+                    this.triggerNewYearEffects();
+                }, 500);
+                
+                this.showNotification('触发新年特效', 'info');
+            }
+            
+            // 返回主页的通用方法
+            returnToMain() {
                 // 停止所有特效
                 this.stopAudio();
                 this.fireworkActive = false;
@@ -1935,63 +2046,8 @@
                 // 恢复正常的粒子背景
                 this.initParticles();
                 
-                this.showNotification('已返回主页', 'info');
-            }
-            
-            adminTestEffects() {
-                this.showNotification('测试特效开始', 'info');
-                this.triggerNewYearEffects();
-            }
-            
-            adminResetAll() {
-                if (confirm('⚠️ 确定要重置所有数据吗？这将清除所有用户信息和设置。')) {
-                    localStorage.clear();
-                    this.visitorCount = 0;
-                    this.todayUsers = 0;
-                    this.lastVisitDate = null;
-                    this.currentUser = null;
-                    
-                    document.getElementById('welcomeScreen').style.display = 'flex';
-                    document.getElementById('welcomeScreen').style.opacity = '1';
-                    document.getElementById('mainContent').classList.remove('active');
-                    document.getElementById('adminPanel').classList.remove('active');
-                    
-                    this.showNotification('所有数据已重置', 'success');
-                    location.reload();
-                }
-            }
-            
-            setManualTime() {
-                const year = parseInt(document.getElementById('adminYear').value) || 2025;
-                const month = parseInt(document.getElementById('adminMonth').value) - 1 || 11;
-                const day = parseInt(document.getElementById('adminDay').value) || 31;
-                const hour = parseInt(document.getElementById('adminHour').value) || 23;
-                const minute = parseInt(document.getElementById('adminMinute').value) || 59;
-                const second = parseInt(document.getElementById('adminSecond').value) || 59;
-                
-                this.manualDateTime = new Date(year, month, day, hour, minute, second);
-                this.isManualTime = true;
-                this.fireworkActive = false;
-                
-                // 如果设置到23:59:40，计算音频播放时间
-                if (hour === 23 && minute === 59 && second === 40) {
-                    setTimeout(() => this.playAudio(), 4000);
-                } else if (hour === 23 && minute === 59 && second < 44) {
-                    const timeTo44 = 44 - second;
-                    setTimeout(() => this.playAudio(), timeTo44 * 1000);
-                }
-                
+                // 重启倒计时
                 this.startCountdown();
-                this.showNotification(`时间已设置为 ${year}年${month+1}月${day}日 ${hour}:${minute}:${second}`, 'success');
-            }
-            
-            resetToRealTime() {
-                this.isManualTime = false;
-                this.manualDateTime = null;
-                this.fireworkActive = false;
-                
-                this.startCountdown();
-                this.showNotification('已恢复真实时间', 'info');
             }
             
             showNotification(message, type = 'info') {
