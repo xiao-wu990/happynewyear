@@ -3,340 +3,411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新年跨年倒计时 - 迎接2026</title>
-    
-    <!-- 安全防护 -->
-    <script>
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.addEventListener('selectstart', e => e.preventDefault());
-        document.addEventListener('copy', e => e.preventDefault());
-        document.addEventListener('keydown', e => {
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) e.preventDefault();
-        });
-    </script>
+    <title>智能节日倒计时系统 - 完整版</title>
     
     <!-- 外部库 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@100;300;400;500;700;900&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     
     <style>
-        /* 基础重置 */
+        /* ========== 基础重置 ========== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html {
+            scroll-behavior: smooth;
         }
         
         body {
             font-family: 'Noto Sans SC', sans-serif;
-            background: #0a0a1a;
+            background: linear-gradient(135deg, 
+                #0a0a1a 0%, 
+                #1a1a2e 30%, 
+                #16213e 70%, 
+                #0f3460 100%);
             color: #fff;
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            line-height: 1.6;
         }
         
-        /* 星空背景 */
-        .starfield {
+        /* ========== 星空背景系统 ========== */
+        .universe-container {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -3;
+            z-index: -10;
+            overflow: hidden;
+        }
+        
+        .galaxy-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
         }
         
         .star {
             position: absolute;
             background: white;
             border-radius: 50%;
-            animation: twinkle var(--duration) infinite ease-in-out;
+            animation: starTwinkle var(--duration) infinite ease-in-out;
+            box-shadow: 0 0 var(--glow) rgba(255, 255, 255, var(--glow-opacity));
         }
         
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
+        .shooting-star {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8));
+            width: 120px;
+            height: 2px;
+            border-radius: 50%;
+            animation: shootStar var(--speed) linear infinite;
+            transform: rotate(var(--angle));
+            opacity: 0;
         }
         
-        /* 粒子背景 */
+        .nebula {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.1;
+            mix-blend-mode: screen;
+        }
+        
+        /* ========== 粒子背景 ========== */
         #particles-js {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -2;
+            z-index: -5;
             pointer-events: none;
         }
         
-        /* 粒子文字容器 */
-        .particle-text-container {
+        /* ========== 主容器 ========== */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 30px 20px 100px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* ========== 欢迎界面 ========== */
+        .welcome-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 2000;
-            display: none;
-            pointer-events: none;
-        }
-        
-        .particle-text-container.active {
-            display: block;
-        }
-        
-        .particle-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        
-        /* 烟花特效层 */
-        .firework-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2101;
-            pointer-events: none;
-            display: none;
-        }
-        
-        .firework-overlay.active {
-            display: block;
-        }
-        
-        .firework {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            animation: fireworkExplode 1.5s ease-out forwards;
-            box-shadow: 0 0 20px currentColor;
-        }
-        
-        @keyframes fireworkExplode {
-            0% {
-                transform: translate(var(--startX), var(--startY)) scale(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-                transform: translate(var(--startX), var(--startY)) scale(1.5);
-            }
-            100% {
-                transform: translate(var(--endX), var(--endY)) scale(0.5);
-                opacity: 0;
-            }
-        }
-        
-        /* 欢迎界面 */
-        .welcome-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(ellipse at center, #000428 0%, #0a0a2a 70%);
+            background: radial-gradient(ellipse at center, 
+                rgba(0, 4, 40, 0.95) 0%, 
+                rgba(10, 10, 26, 0.98) 70%);
+            z-index: 10000;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            backdrop-filter: blur(20px);
+            animation: overlayEntrance 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .welcome-card {
-            background: rgba(15, 15, 35, 0.9);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            padding: 70px 60px;
+            background: linear-gradient(145deg,
+                rgba(25, 25, 60, 0.9) 0%,
+                rgba(40, 40, 80, 0.7) 100%);
+            border-radius: 35px;
+            padding: 80px 70px;
             width: 90%;
-            max-width: 550px;
+            max-width: 680px;
             text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(51, 204, 255, 0.3);
             box-shadow: 
-                0 30px 60px rgba(0, 0, 0, 0.6),
-                0 0 120px rgba(51, 204, 255, 0.25);
+                0 40px 80px rgba(0, 0, 0, 0.6),
+                0 0 150px rgba(51, 204, 255, 0.25),
+                inset 0 0 60px rgba(255, 255, 255, 0.05);
             animation: cardFloat 8s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
         }
         
-        @keyframes cardFloat {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            33% { transform: translateY(-25px) rotate(0.5deg); }
-            66% { transform: translateY(15px) rotate(-0.5deg); }
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                #ff3366, #33ccff, #ffcc00, #00cc88);
+            z-index: -1;
+            border-radius: 37px;
+            filter: blur(20px);
+            opacity: 0.3;
+            animation: gradientBorder 8s linear infinite;
         }
         
         .welcome-title {
             font-family: 'Ma Shan Zheng', cursive;
-            font-size: 4.2rem;
-            background: linear-gradient(45deg, #FF3366, #33CCFF, #FFCC00);
+            font-size: 4.8rem;
+            background: linear-gradient(45deg, 
+                #FF3366 0%, 
+                #33CCFF 33%, 
+                #FFCC00 66%, 
+                #00CC88 100%);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 30px;
-            text-shadow: 0 0 50px rgba(255, 51, 102, 0.4);
+            margin-bottom: 35px;
+            text-shadow: 
+                0 0 60px rgba(255, 51, 102, 0.4),
+                0 0 120px rgba(51, 204, 255, 0.3);
+            letter-spacing: 4px;
+            line-height: 1.2;
+            position: relative;
+        }
+        
+        .welcome-title::after {
+            content: '✨';
+            position: absolute;
+            top: -20px;
+            right: -40px;
+            font-size: 3rem;
+            animation: sparkle 3s ease-in-out infinite;
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.8rem;
+            color: #33CCFF;
+            margin-bottom: 60px;
             letter-spacing: 3px;
+            font-weight: 300;
+            text-shadow: 0 0 25px rgba(51, 204, 255, 0.5);
         }
         
         .form-group {
-            margin-bottom: 35px;
+            margin-bottom: 45px;
             text-align: left;
         }
         
         .form-label {
             display: block;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: #FFCC00;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 500;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .form-label i {
+            font-size: 1.6rem;
+            filter: drop-shadow(0 0 10px currentColor);
         }
         
         .form-input {
             width: 100%;
-            padding: 20px 25px;
-            background: rgba(255, 255, 255, 0.08);
+            padding: 25px 30px;
+            background: rgba(255, 255, 255, 0.07);
             border: 2px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
+            border-radius: 20px;
             color: #fff;
-            font-size: 1.2rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.4rem;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Noto Sans SC', sans-serif;
         }
         
         .form-input:focus {
             background: rgba(255, 255, 255, 0.12);
             border-color: #33CCFF;
-            box-shadow: 0 0 35px rgba(51, 204, 255, 0.5);
-            outline: none;
-            transform: translateY(-5px);
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #FF3366 0%, #33CCFF 100%);
-            color: white;
-            border: none;
-            padding: 22px 65px;
-            border-radius: 50px;
-            font-size: 1.3rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 1.5px;
-        }
-        
-        .btn:hover {
-            transform: translateY(-10px) scale(1.05);
             box-shadow: 
-                0 25px 50px rgba(255, 51, 102, 0.6),
-                0 0 80px rgba(51, 204, 255, 0.4);
+                0 0 50px rgba(51, 204, 255, 0.6),
+                inset 0 0 20px rgba(51, 204, 255, 0.2);
+            outline: none;
+            transform: translateY(-5px) scale(1.02);
         }
         
-        /* 主内容区域 */
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+        }
+        
+        /* ========== 主内容区域 ========== */
         .main-content {
-            display: none;
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-            padding: 50px 30px;
             opacity: 0;
-            transform: translateY(40px);
+            transform: translateY(50px);
             transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .main-content.active {
             opacity: 1;
             transform: translateY(0);
-            display: block;
         }
         
-        .header {
+        /* ========== 头部区域 ========== */
+        .main-header {
             text-align: center;
-            padding: 60px 20px 50px;
+            padding: 80px 20px 60px;
+            position: relative;
         }
         
         .year-display {
-            font-family: 'Ma Shan Zheng', cursive;
-            font-size: 10rem;
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+            font-size: 12rem;
             font-weight: 900;
             color: transparent;
-            background: linear-gradient(45deg, #FF3366, #33CCFF, #FFCC00, #00CC88);
+            background: linear-gradient(45deg, 
+                #FF3366 0%, 
+                #33CCFF 25%, 
+                #FFCC00 50%, 
+                #00CC88 75%, 
+                #9966FF 100%);
             -webkit-background-clip: text;
             background-clip: text;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             text-shadow: 
-                0 0 60px rgba(255, 51, 102, 0.4),
-                0 0 120px rgba(51, 204, 255, 0.3);
-            letter-spacing: 10px;
-            animation: yearPulse 4s ease-in-out infinite;
+                0 0 80px rgba(255, 51, 102, 0.5),
+                0 0 160px rgba(51, 204, 255, 0.4),
+                0 0 240px rgba(255, 204, 0, 0.3);
+            letter-spacing: 15px;
+            animation: yearGlow 4s ease-in-out infinite;
+            line-height: 1;
+            position: relative;
+            display: inline-block;
         }
         
-        @keyframes yearPulse {
-            0%, 100% { 
-                text-shadow: 
-                    0 0 50px rgba(255, 51, 102, 0.4),
-                    0 0 100px rgba(51, 204, 255, 0.3);
-            }
-            50% { 
-                text-shadow: 
-                    0 0 80px rgba(255, 51, 102, 0.7),
-                    0 0 160px rgba(51, 204, 255, 0.6),
-                    0 0 200px rgba(255, 204, 0, 0.4);
-            }
+        .year-display::before,
+        .year-display::after {
+            content: '🎆';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 4rem;
+            animation: fireworkSpin 6s linear infinite;
         }
         
-        /* 倒计时区域 */
-        .countdown-container {
-            background: rgba(15, 15, 35, 0.75);
-            backdrop-filter: blur(25px);
-            border-radius: 30px;
-            padding: 70px 50px;
+        .year-display::before {
+            left: -80px;
+        }
+        
+        .year-display::after {
+            right: -80px;
+        }
+        
+        .countdown-prompt {
+            font-size: 2.5rem;
+            color: #33CCFF;
+            margin-top: 20px;
+            letter-spacing: 4px;
+            font-weight: 300;
+            text-shadow: 0 0 35px rgba(51, 204, 255, 0.7);
+        }
+        
+        /* ========== 倒计时区域 ========== */
+        .countdown-section {
+            position: relative;
             margin: 60px auto;
-            max-width: 1100px;
+            max-width: 1300px;
+        }
+        
+        .countdown-container {
+            background: linear-gradient(145deg,
+                rgba(20, 20, 50, 0.85) 0%,
+                rgba(40, 40, 80, 0.65) 100%);
+            backdrop-filter: blur(35px);
+            border-radius: 40px;
+            padding: 80px 60px;
             border: 2px solid rgba(255, 255, 255, 0.2);
             box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.5),
-                inset 0 0 120px rgba(255, 255, 255, 0.08);
+                0 40px 80px rgba(0, 0, 0, 0.5),
+                inset 0 0 150px rgba(255, 255, 255, 0.08),
+                0 0 100px rgba(51, 204, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .countdown-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 51, 102, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(51, 204, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 204, 0, 0.1) 0%, transparent 50%);
+            pointer-events: none;
         }
         
         .countdown-title {
             text-align: center;
-            font-size: 3rem;
+            font-size: 3.8rem;
             color: #FFCC00;
-            margin-bottom: 70px;
-            text-shadow: 0 0 35px rgba(255, 204, 0, 0.8);
-            letter-spacing: 4px;
+            margin-bottom: 80px;
+            text-shadow: 
+                0 0 40px rgba(255, 204, 0, 0.9),
+                0 0 80px rgba(255, 204, 0, 0.5);
+            letter-spacing: 6px;
             font-weight: 700;
+            font-family: 'Ma Shan Zheng', cursive;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
         }
         
+        .countdown-title::before,
+        .countdown-title::after {
+            content: '⏰';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            animation: clockTick 2s ease-in-out infinite;
+        }
+        
+        .countdown-title::before {
+            left: -70px;
+        }
+        
+        .countdown-title::after {
+            right: -70px;
+        }
+        
+        /* ========== 倒计时网格 ========== */
         .countdown-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 35px;
+            gap: 40px;
         }
         
         .countdown-item {
             background: linear-gradient(135deg, 
                 rgba(255, 51, 102, 0.25) 0%, 
-                rgba(51, 204, 255, 0.25) 100%);
-            border-radius: 25px;
-            padding: 60px 35px;
+                rgba(51, 204, 255, 0.25) 50%,
+                rgba(255, 204, 0, 0.25) 100%);
+            border-radius: 30px;
+            padding: 70px 40px;
             text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
         
         .countdown-item::before {
@@ -347,249 +418,502 @@
             right: 0;
             bottom: 0;
             background: linear-gradient(135deg, 
-                rgba(255, 51, 102, 0.15) 0%, 
-                rgba(51, 204, 255, 0.15) 100%);
+                rgba(255, 51, 102, 0.35) 0%, 
+                rgba(51, 204, 255, 0.35) 50%,
+                rgba(255, 204, 0, 0.35) 100%);
             opacity: 0;
-            transition: opacity 0.5s;
+            transition: opacity 0.6s;
+            z-index: 1;
         }
         
         .countdown-item:hover {
-            transform: translateY(-20px) scale(1.08);
+            transform: translateY(-25px) scale(1.1);
             box-shadow: 
-                0 35px 70px rgba(0, 0, 0, 0.6),
-                0 0 80px rgba(255, 51, 102, 0.4);
+                0 50px 100px rgba(0, 0, 0, 0.7),
+                0 0 120px rgba(255, 51, 102, 0.5),
+                0 0 200px rgba(51, 204, 255, 0.3);
+            z-index: 2;
         }
         
         .countdown-item:hover::before {
             opacity: 1;
         }
         
+        .countdown-item:hover .countdown-value {
+            text-shadow: 
+                0 0 60px rgba(255, 51, 102, 0.9),
+                0 0 120px rgba(255, 51, 102, 0.6);
+        }
+        
         .countdown-value {
-            font-size: 6rem;
+            font-size: 7rem;
             font-weight: 900;
             color: #FF3366;
             text-shadow: 
-                0 0 40px rgba(255, 51, 102, 0.8),
-                0 0 80px rgba(255, 51, 102, 0.4);
+                0 0 50px rgba(255, 51, 102, 0.8),
+                0 0 100px rgba(255, 51, 102, 0.4);
             line-height: 1;
-            margin-bottom: 20px;
-            font-family: 'Ma Shan Zheng', cursive;
-            font-feature-settings: "tnum";
+            margin-bottom: 25px;
+            font-family: 'ZCOOL QingKe HuangYou', cursive;
+            position: relative;
+            z-index: 2;
+            transition: all 0.6s;
         }
         
         .countdown-label {
-            font-size: 1.6rem;
+            font-size: 2rem;
             color: #33CCFF;
             text-transform: uppercase;
-            letter-spacing: 5px;
-            font-weight: 500;
-            text-shadow: 0 0 25px rgba(51, 204, 255, 0.6);
+            letter-spacing: 6px;
+            font-weight: 600;
+            text-shadow: 0 0 30px rgba(51, 204, 255, 0.7);
+            position: relative;
+            z-index: 2;
         }
         
-        /* 信封按钮 */
-        .envelope-container {
-            position: fixed;
-            bottom: 30vh;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 2200;
-            text-align: center;
-            display: none;
-            animation: envelopeFloat 3s ease-in-out infinite;
-            pointer-events: auto;
-            width: 100%;
-            max-width: 600px;
-            padding: 0 20px;
-        }
-        
-        .envelope-container.active {
-            display: block;
-        }
-        
-        @keyframes envelopeFloat {
-            0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
-            50% { transform: translateX(-50%) translateY(-20px) scale(1.1); }
-        }
-        
-        .envelope-hint {
-            color: #FFCC00;
-            font-size: 1.6rem;
-            margin-bottom: 30px;
-            text-shadow: 0 0 25px rgba(255, 204, 0, 0.7);
-            animation: hintGlow 3s ease-in-out infinite;
-        }
-        
-        @keyframes hintGlow {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
-        }
-        
-        /* 黑色过渡层 */
-        .transition-overlay {
+        /* ========== 烟花特效层 ========== */
+        .fireworks-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000;
-            z-index: 1999;
+            z-index: 2000;
+            pointer-events: none;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 1.2s ease;
+            transition: all 0.5s ease;
         }
         
-        .transition-overlay.active {
+        .fireworks-overlay.active {
             opacity: 1;
             visibility: visible;
         }
         
-        /* 新年贺卡 */
+        .firework-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: fireworkExplode 1.5s ease-out forwards;
+            box-shadow: 
+                0 0 15px currentColor,
+                0 0 30px currentColor;
+            filter: blur(0.5px);
+        }
+        
+        /* ========== 粒子文字系统 ========== */
+        .particle-text-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2100;
+            display: none;
+            pointer-events: none;
+        }
+        
+        .particle-text-container.active {
+            display: block;
+        }
+        
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        /* ========== 信封系统 ========== */
+        .envelope-section {
+            position: fixed;
+            bottom: 25vh;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2200;
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            padding: 0 30px;
+            display: none;
+        }
+        
+        .envelope-section.active {
+            display: block;
+            animation: envelopeFloat 3.5s ease-in-out infinite;
+        }
+        
+        .envelope-hint {
+            color: #FFCC00;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            text-shadow: 
+                0 0 30px rgba(255, 204, 0, 0.8),
+                0 0 60px rgba(255, 204, 0, 0.4);
+            animation: hintPulse 3s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .envelope-hint i {
+            animation: giftFloat 2s ease-in-out infinite;
+        }
+        
+        /* ========== 贺卡系统 ========== */
+        .letter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 3000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .letter-overlay.active {
+            display: flex;
+            animation: overlayFadeIn 0.8s ease;
+        }
+        
         .letter-container {
+            background: linear-gradient(135deg, 
+                #fff8e1 0%, 
+                #ffecb3 30%,
+                #ffe082 70%,
+                #ffd54f 100%);
+            border-radius: 40px;
+            padding: 90px 80px;
+            width: 90%;
+            max-width: 850px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.8) rotateX(-15deg);
+            opacity: 0;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 60px 120px rgba(0, 0, 0, 0.8),
+                0 0 250px rgba(255, 51, 102, 0.6),
+                inset 0 0 100px rgba(255, 215, 0, 0.3);
+            border: 20px solid #d32f2f;
+        }
+        
+        .letter-container.active {
+            transform: scale(1) rotateX(0);
+            opacity: 1;
+        }
+        
+        .letter-header {
+            color: #d32f2f;
+            border-bottom: 8px solid #ff9800;
+            padding-bottom: 40px;
+            margin-bottom: 50px;
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 3rem;
+            text-shadow: 
+                5px 5px 10px rgba(0, 0, 0, 0.2),
+                0 0 20px rgba(255, 152, 0, 0.3);
+            position: relative;
+        }
+        
+        .letter-header::after {
+            content: '✉️';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5rem;
+            animation: envelopeShake 0.5s ease-in-out infinite;
+        }
+        
+        .letter-content {
+            color: #5d4037;
+            font-size: 1.8rem;
+            line-height: 2.2;
+            font-family: 'Ma Shan Zheng', cursive;
+            text-align: justify;
+            margin-bottom: 60px;
+            padding: 50px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 25px;
+            border-left: 12px solid #4caf50;
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.2),
+                inset 0 0 30px rgba(255, 255, 255, 0.5);
+            position: relative;
+        }
+        
+        .letter-content::before {
+            content: '"';
+            position: absolute;
+            top: -30px;
+            left: 30px;
+            font-size: 8rem;
+            color: rgba(76, 175, 80, 0.2);
+            font-family: 'Times New Roman', serif;
+        }
+        
+        /* ========== 节日日历 ========== */
+        .calendar-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.97);
-            z-index: 3000;
+            z-index: 4000;
             display: none;
             justify-content: center;
             align-items: center;
-            padding: 30px;
+            padding: 40px;
+            backdrop-filter: blur(15px);
         }
         
-        .letter-container.active {
+        .calendar-overlay.active {
             display: flex;
         }
         
-        .letter {
-            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
-            border-radius: 30px;
-            padding: 70px 60px;
+        .calendar-container {
+            background: linear-gradient(145deg,
+                rgba(25, 25, 60, 0.95) 0%,
+                rgba(40, 40, 80, 0.85) 100%);
+            border-radius: 40px;
+            padding: 80px 70px;
             width: 90%;
-            max-width: 750px;
+            max-width: 1400px;
             max-height: 90vh;
             overflow-y: auto;
-            position: relative;
-            transform: scale(0.7) rotateX(-20deg);
-            opacity: 0;
-            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid rgba(51, 204, 255, 0.4);
             box-shadow: 
-                0 40px 80px rgba(0, 0, 0, 0.7),
-                0 0 200px rgba(255, 51, 102, 0.5);
-            border: 15px solid #d32f2f;
-            animation: letterShake 0.3s ease-in-out infinite;
+                0 50px 100px rgba(0, 0, 0, 0.7),
+                0 0 200px rgba(51, 204, 255, 0.5),
+                inset 0 0 100px rgba(255, 255, 255, 0.08);
         }
         
-        .letter.active {
-            transform: scale(1) rotateX(0);
-            opacity: 1;
-        }
-        
-        @keyframes letterShake {
-            0%, 100% { transform: rotate(0deg) translateX(0) scale(1); }
-            25% { transform: rotate(0.8deg) translateX(3px) scale(1.01); }
-            75% { transform: rotate(-0.8deg) translateX(-3px) scale(1.01); }
-        }
-        
-        .letter-header {
-            color: #d32f2f;
-            border-bottom: 5px solid #ff9800;
-            padding-bottom: 30px;
-            margin-bottom: 40px;
+        .calendar-title {
+            text-align: center;
+            font-size: 3.5rem;
+            color: #FFCC00;
+            margin-bottom: 70px;
+            text-shadow: 
+                0 0 40px rgba(255, 204, 0, 0.9),
+                0 0 80px rgba(255, 204, 0, 0.5);
+            letter-spacing: 5px;
+            font-weight: 700;
             font-family: 'Ma Shan Zheng', cursive;
-            font-size: 2.5rem;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.2);
-        }
-        
-        .letter-content {
-            color: #5d4037;
-            font-size: 1.5rem;
-            line-height: 2;
-            font-family: 'Ma Shan Zheng', cursive;
-            text-align: justify;
-            margin-bottom: 50px;
-            padding: 35px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            border-left: 8px solid #4caf50;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-        }
-        
-        /* 节日日历 */
-        .calendar-container {
-            display: none;
             position: relative;
-            z-index: 2;
-            max-width: 1300px;
-            margin: 80px auto;
-            padding: 70px 55px;
-            background: rgba(15, 15, 35, 0.8);
-            backdrop-filter: blur(30px);
-            border-radius: 30px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
         }
         
-        .calendar-container.active {
-            display: block;
+        .calendar-title::before,
+        .calendar-title::after {
+            content: '🎊';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3rem;
+            animation: confettiFloat 2s ease-in-out infinite;
+        }
+        
+        .calendar-title::before {
+            left: -70px;
+        }
+        
+        .calendar-title::after {
+            right: -70px;
         }
         
         .holiday-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 35px;
-            margin-top: 50px;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
         }
         
         .holiday-card {
-            background: linear-gradient(135deg, 
-                rgba(255, 51, 102, 0.2) 0%, 
-                rgba(51, 204, 255, 0.2) 100%);
-            border-radius: 25px;
-            padding: 40px 35px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
+            background: linear-gradient(135deg,
+                rgba(255, 51, 102, 0.2) 0%,
+                rgba(51, 204, 255, 0.2) 50%,
+                rgba(255, 204, 0, 0.2) 100%);
+            border-radius: 30px;
+            padding: 50px 40px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
         
         .holiday-card:hover {
-            transform: translateY(-15px) scale(1.05);
+            transform: translateY(-20px) scale(1.05);
             box-shadow: 
-                0 30px 60px rgba(0, 0, 0, 0.5),
-                0 0 70px rgba(255, 51, 102, 0.4);
+                0 40px 80px rgba(0, 0, 0, 0.6),
+                0 0 100px rgba(255, 51, 102, 0.4);
+            border-color: rgba(255, 51, 102, 0.5);
         }
         
-        /* 社交链接 */
+        .holiday-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg,
+                rgba(255, 51, 102, 0.3) 0%,
+                rgba(51, 204, 255, 0.3) 50%,
+                rgba(255, 204, 0, 0.3) 100%);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .holiday-card:hover::before {
+            opacity: 1;
+        }
+        
+        .holiday-card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 25px;
+            color: var(--holiday-color, #FFCC00);
+            text-shadow: 0 0 30px currentColor;
+            display: block;
+        }
+        
+        .holiday-card-title {
+            font-size: 2.2rem;
+            color: #FFCC00;
+            margin-bottom: 20px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .holiday-card-date {
+            font-size: 1.6rem;
+            color: #33CCFF;
+            margin-bottom: 25px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .holiday-card-desc {
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.7;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* ========== 按钮样式 ========== */
+        .btn {
+            background: linear-gradient(135deg, 
+                #FF3366 0%, 
+                #33CCFF 100%);
+            color: white;
+            border: none;
+            padding: 28px 80px;
+            border-radius: 60px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(255, 51, 102, 0.4);
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.2) 0%, 
+                transparent 100%);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-12px) scale(1.08);
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.5),
+                0 0 100px rgba(255, 51, 102, 0.6),
+                0 0 150px rgba(51, 204, 255, 0.4);
+        }
+        
+        .btn:hover::before {
+            opacity: 1;
+        }
+        
+        .btn i {
+            font-size: 1.8rem;
+            transition: transform 0.5s;
+        }
+        
+        .btn:hover i {
+            transform: scale(1.3) rotate(15deg);
+        }
+        
+        .btn-large {
+            padding: 35px 100px;
+            font-size: 1.8rem;
+        }
+        
+        /* ========== 社交链接 ========== */
         .social-links {
             position: fixed;
-            bottom: 40px;
-            right: 40px;
+            bottom: 50px;
+            right: 50px;
             z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 30px;
         }
         
         .social-btn {
-            width: 75px;
-            height: 75px;
+            width: 85px;
+            height: 85px;
             border-radius: 50%;
             background: linear-gradient(135deg, 
-                rgba(255, 51, 102, 0.25) 0%, 
-                rgba(51, 204, 255, 0.25) 100%);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+                rgba(255, 51, 102, 0.3) 0%, 
+                rgba(51, 204, 255, 0.3) 100%);
+            backdrop-filter: blur(25px);
+            border: 2px solid rgba(255, 255, 255, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 2rem;
+            font-size: 2.2rem;
             text-decoration: none;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
         }
         
         .social-btn::before {
@@ -600,212 +924,58 @@
             right: 0;
             bottom: 0;
             background: linear-gradient(135deg, 
-                rgba(255, 51, 102, 0.4) 0%, 
-                rgba(51, 204, 255, 0.4) 100%);
+                rgba(255, 51, 102, 0.5) 0%, 
+                rgba(51, 204, 255, 0.5) 100%);
             opacity: 0;
             transition: opacity 0.5s;
         }
         
         .social-btn:hover {
-            transform: translateY(-15px) scale(1.2);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transform: translateY(-15px) scale(1.25);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 80px rgba(255, 51, 102, 0.5);
         }
         
         .social-btn:hover::before {
             opacity: 1;
         }
         
-        /* 通知 */
+        /* ========== 通知系统 ========== */
         .notification {
             position: fixed;
-            top: 35px;
-            right: 35px;
-            background: linear-gradient(135deg, #FF3366, #33CCFF);
+            top: 50px;
+            right: 50px;
+            background: linear-gradient(135deg, 
+                #FF3366, 
+                #33CCFF);
             color: white;
-            padding: 30px 40px;
-            border-radius: 18px;
-            z-index: 4000;
-            transform: translateX(200%);
-            transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            max-width: 450px;
-            font-size: 1.2rem;
-            font-weight: 500;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            padding: 35px 50px;
+            border-radius: 25px;
+            z-index: 5000;
+            transform: translateX(150%);
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 500px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(255, 51, 102, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
         
         .notification.show {
             transform: translateX(0);
         }
         
-        /* 管理员面板 */
-        .admin-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.98);
-            z-index: 5000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 30px;
+        .notification i {
+            font-size: 2rem;
         }
         
-        .admin-panel.active {
-            display: flex;
-        }
-        
-        .admin-content {
-            background: rgba(15, 15, 35, 0.95);
-            backdrop-filter: blur(40px);
-            border-radius: 30px;
-            padding: 70px 60px;
-            width: 90%;
-            max-width: 1000px;
-            border: 3px solid rgba(51, 204, 255, 0.4);
-            box-shadow: 
-                0 40px 80px rgba(0, 0, 0, 0.7),
-                0 0 250px rgba(51, 204, 255, 0.5);
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .admin-title {
-            color: #FFCC00;
-            font-size: 3rem;
-            text-align: center;
-            margin-bottom: 60px;
-            text-shadow: 0 0 35px rgba(255, 204, 0, 0.8);
-            letter-spacing: 3px;
-        }
-        
-        .admin-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 25px;
-            margin-bottom: 60px;
-        }
-        
-        .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 22px;
-            padding: 35px;
-            text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            transition: transform 0.4s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-12px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .stat-value {
-            font-size: 3.5rem;
-            color: #33CCFF;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 0 0 30px rgba(51, 204, 255, 0.6);
-        }
-        
-        .stat-label {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2rem;
-            letter-spacing: 1.5px;
-        }
-        
-        .admin-time-control {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 22px;
-            padding: 45px;
-            margin-bottom: 40px;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-        }
-        
-        .time-input-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .time-input {
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 15px;
-            color: white;
-            font-size: 1.3rem;
-            text-align: center;
-            transition: all 0.4s ease;
-        }
-        
-        .time-input:focus {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: #33CCFF;
-            outline: none;
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(51, 204, 255, 0.4);
-        }
-        
-        /* 管理员按钮容器 - 固定位置 */
-        .admin-control-buttons {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 30px;
-            position: sticky;
-            bottom: 20px;
-            background: rgba(15, 15, 35, 0.9);
-            padding: 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            z-index: 10;
-        }
-        
-        .admin-btn {
-            padding: 18px 35px;
-            border-radius: 50px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 1.5px;
-            border: none;
-            color: white;
-            min-width: 180px;
-            flex: 1;
-        }
-        
-        .admin-btn-primary {
-            background: linear-gradient(135deg, #33CCFF 0%, #0099CC 100%);
-        }
-        
-        .admin-btn-secondary {
-            background: linear-gradient(135deg, #FFCC00 0%, #FF9900 100%);
-        }
-        
-        .admin-btn-danger {
-            background: linear-gradient(135deg, #FF3366 0%, #CC0033 100%);
-        }
-        
-        .admin-btn:hover {
-            transform: translateY(-8px) scale(1.05);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
-        
-        /* 加载动画 */
-        .loading-overlay {
+        /* ========== 管理员面板 ========== */
+        .admin-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -816,7 +986,45 @@
             display: none;
             justify-content: center;
             align-items: center;
+            padding: 40px;
+            backdrop-filter: blur(30px);
+        }
+        
+        .admin-overlay.active {
+            display: flex;
+        }
+        
+        .admin-container {
+            background: linear-gradient(145deg,
+                rgba(15, 15, 40, 0.95) 0%,
+                rgba(30, 30, 70, 0.85) 100%);
+            border-radius: 40px;
+            padding: 90px 80px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 3px solid rgba(51, 204, 255, 0.5);
+            box-shadow: 
+                0 60px 120px rgba(0, 0, 0, 0.7),
+                0 0 250px rgba(51, 204, 255, 0.6),
+                inset 0 0 150px rgba(255, 255, 255, 0.1);
+        }
+        
+        /* ========== 加载动画 ========== */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 7000;
+            display: none;
+            justify-content: center;
+            align-items: center;
             flex-direction: column;
+            backdrop-filter: blur(20px);
         }
         
         .loading-overlay.active {
@@ -824,220 +1032,605 @@
         }
         
         .spinner {
-            width: 100px;
-            height: 100px;
-            border: 8px solid rgba(255, 255, 255, 0.15);
-            border-top: 8px solid #33CCFF;
+            width: 120px;
+            height: 120px;
+            border: 10px solid rgba(255, 255, 255, 0.1);
+            border-top: 10px solid #33CCFF;
             border-radius: 50%;
-            animation: spin 1.2s linear infinite;
-            margin-bottom: 40px;
+            animation: spin 1.5s linear infinite;
+            margin-bottom: 50px;
+            box-shadow: 
+                0 0 50px rgba(51, 204, 255, 0.5),
+                inset 0 0 30px rgba(51, 204, 255, 0.2);
         }
         
         .loading-text {
             color: #33CCFF;
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             text-align: center;
-            letter-spacing: 3px;
+            letter-spacing: 4px;
+            font-weight: 300;
+            text-shadow: 0 0 30px rgba(51, 204, 255, 0.7);
         }
         
-        /* 响应式设计 */
+        /* ========== 动画定义 ========== */
+        @keyframes starTwinkle {
+            0%, 100% { 
+                opacity: var(--min-opacity); 
+                transform: scale(1); 
+            }
+            50% { 
+                opacity: var(--max-opacity); 
+                transform: scale(1.3); 
+            }
+        }
+        
+        @keyframes shootStar {
+            0% {
+                transform: translateX(-100px) translateY(-100px) rotate(var(--angle));
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px)) translateY(calc(100vh + 100px)) rotate(var(--angle));
+                opacity: 0;
+            }
+        }
+        
+        @keyframes overlayEntrance {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes cardFloat {
+            0%, 100% { 
+                transform: translateY(0) rotate(0deg); 
+            }
+            33% { 
+                transform: translateY(-30px) rotate(0.5deg); 
+            }
+            66% { 
+                transform: translateY(20px) rotate(-0.5deg); 
+            }
+        }
+        
+        @keyframes gradientBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+        
+        @keyframes yearGlow {
+            0%, 100% { 
+                text-shadow: 
+                    0 0 60px rgba(255, 51, 102, 0.5),
+                    0 0 120px rgba(51, 204, 255, 0.4),
+                    0 0 180px rgba(255, 204, 0, 0.3);
+            }
+            50% { 
+                text-shadow: 
+                    0 0 100px rgba(255, 51, 102, 0.8),
+                    0 0 200px rgba(51, 204, 255, 0.6),
+                    0 0 300px rgba(255, 204, 0, 0.5),
+                    0 0 400px rgba(0, 204, 136, 0.4);
+            }
+        }
+        
+        @keyframes fireworkSpin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+        
+        @keyframes clockTick {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.2); }
+        }
+        
+        @keyframes fireworkExplode {
+            0% {
+                transform: translate(var(--start-x), var(--start-y)) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translate(var(--start-x), var(--start-y)) scale(1.3);
+            }
+            100% {
+                transform: translate(var(--end-x), var(--end-y)) scale(0.2);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes envelopeFloat {
+            0%, 100% { 
+                transform: translateX(-50%) translateY(0) scale(1); 
+            }
+            50% { 
+                transform: translateX(-50%) translateY(-25px) scale(1.12); 
+            }
+        }
+        
+        @keyframes hintPulse {
+            0%, 100% { 
+                opacity: 0.8; 
+                text-shadow: 
+                    0 0 25px rgba(255, 204, 0, 0.7),
+                    0 0 50px rgba(255, 204, 0, 0.4);
+            }
+            50% { 
+                opacity: 1; 
+                text-shadow: 
+                    0 0 40px rgba(255, 204, 0, 0.9),
+                    0 0 80px rgba(255, 204, 0, 0.6),
+                    0 0 120px rgba(255, 204, 0, 0.3);
+            }
+        }
+        
+        @keyframes giftFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(-10deg); }
+            75% { transform: translateY(-10px) rotate(10deg); }
+        }
+        
+        @keyframes overlayFadeIn {
+            from { 
+                opacity: 0; 
+                backdrop-filter: blur(0);
+            }
+            to { 
+                opacity: 1; 
+                backdrop-filter: blur(10px);
+            }
+        }
+        
+        @keyframes envelopeShake {
+            0%, 100% { transform: translateY(-50%) rotate(0deg); }
+            25% { transform: translateY(-50%) rotate(5deg); }
+            75% { transform: translateY(-50%) rotate(-5deg); }
+        }
+        
+        @keyframes confettiFloat {
+            0%, 100% { transform: translateY(-50%) rotate(0deg); }
+            50% { transform: translateY(-60%) rotate(180deg); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ========== 响应式设计 ========== */
+        @media (max-width: 1600px) {
+            .year-display { font-size: 10rem; }
+            .countdown-value { font-size: 6rem; }
+            .countdown-title { font-size: 3.2rem; }
+        }
+        
         @media (max-width: 1200px) {
-            .year-display { font-size: 8rem; }
-            .countdown-value { font-size: 5rem; }
-            .countdown-grid { gap: 30px; }
-            .envelope-container { bottom: 25vh; }
+            .year-display { font-size: 8rem; letter-spacing: 12px; }
+            .countdown-grid { grid-template-columns: repeat(2, 1fr); gap: 35px; }
+            .countdown-value { font-size: 5.5rem; }
+            .countdown-item { padding: 60px 35px; }
+            .holiday-grid { grid-template-columns: repeat(2, 1fr); }
         }
         
         @media (max-width: 992px) {
-            .year-display { font-size: 7rem; letter-spacing: 7px; }
-            .countdown-grid { grid-template-columns: repeat(2, 1fr); }
-            .countdown-value { font-size: 4.5rem; }
-            .welcome-title { font-size: 3.5rem; }
-            .countdown-title { font-size: 2.5rem; }
-            .envelope-container { bottom: 20vh; }
-            .admin-control-buttons {
-                position: relative;
-                bottom: 0;
+            .year-display { 
+                font-size: 6.5rem; 
+                letter-spacing: 8px; 
             }
+            .year-display::before,
+            .year-display::after {
+                font-size: 3rem;
+            }
+            .year-display::before { left: -50px; }
+            .year-display::after { right: -50px; }
+            
+            .countdown-prompt { font-size: 2rem; }
+            .countdown-title { 
+                font-size: 2.8rem; 
+                margin-bottom: 60px; 
+            }
+            .countdown-title::before,
+            .countdown-title::after {
+                font-size: 2.5rem;
+            }
+            .countdown-title::before { left: -50px; }
+            .countdown-title::after { right: -50px; }
+            
+            .welcome-card { padding: 70px 50px; }
+            .welcome-title { font-size: 4rem; }
+            
+            .letter-container { padding: 70px 60px; }
+            .calendar-container { padding: 70px 50px; }
+            .admin-container { padding: 70px 50px; }
         }
         
         @media (max-width: 768px) {
-            .year-display { font-size: 6rem; letter-spacing: 5px; }
-            .countdown-value { font-size: 4rem; }
-            .countdown-title { font-size: 2.2rem; }
-            .welcome-title { font-size: 3rem; }
-            .welcome-card { padding: 60px 50px; }
-            .countdown-container { padding: 60px 40px; }
-            .envelope-container { 
-                bottom: 15vh; 
-                max-width: 90%;
+            .year-display { 
+                font-size: 5rem; 
+                letter-spacing: 6px; 
             }
-            .admin-content {
-                padding: 50px 40px;
+            .countdown-grid { 
+                grid-template-columns: 1fr; 
+                gap: 30px; 
+                max-width: 500px;
+                margin: 0 auto;
             }
-            .admin-control-buttons {
-                flex-direction: column;
-                align-items: center;
+            .countdown-value { font-size: 5rem; }
+            .countdown-item { padding: 50px 30px; }
+            
+            .welcome-card { 
+                padding: 60px 40px; 
+                border-radius: 30px;
             }
-            .admin-btn {
-                width: 100%;
-                max-width: 300px;
+            .welcome-title { font-size: 3.2rem; }
+            .form-input { padding: 22px 25px; }
+            
+            .btn { 
+                padding: 25px 60px; 
+                font-size: 1.4rem; 
             }
+            .btn-large { 
+                padding: 30px 70px; 
+                font-size: 1.6rem; 
+            }
+            
+            .social-links {
+                bottom: 30px;
+                right: 30px;
+            }
+            .social-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+            }
+            
+            .holiday-grid { 
+                grid-template-columns: 1fr; 
+                gap: 30px; 
+            }
+            .holiday-card { padding: 40px 30px; }
+            
+            .letter-container { 
+                padding: 60px 40px; 
+                border-width: 15px;
+            }
+            .letter-header { font-size: 2.5rem; }
+            .letter-content { 
+                font-size: 1.6rem; 
+                padding: 40px; 
+            }
+            
+            .calendar-container { padding: 60px 40px; }
+            .calendar-title { font-size: 2.8rem; }
+            
+            .notification {
+                top: 30px;
+                right: 30px;
+                padding: 25px 35px;
+                max-width: 400px;
+            }
+            
+            .envelope-hint { font-size: 1.7rem; }
+            .envelope-section { max-width: 90%; }
         }
         
         @media (max-width: 576px) {
-            .year-display { font-size: 4.5rem; letter-spacing: 3px; }
-            .countdown-grid { grid-template-columns: 1fr; gap: 25px; }
-            .countdown-value { font-size: 3.5rem; }
-            .countdown-item { padding: 50px 30px; }
+            .year-display { 
+                font-size: 3.8rem; 
+                letter-spacing: 4px; 
+            }
+            .year-display::before,
+            .year-display::after {
+                display: none;
+            }
+            
+            .countdown-prompt { 
+                font-size: 1.6rem; 
+                letter-spacing: 2px;
+            }
+            .countdown-title { 
+                font-size: 2.2rem; 
+                letter-spacing: 3px;
+            }
+            .countdown-title::before,
+            .countdown-title::after {
+                display: none;
+            }
+            
+            .welcome-card { 
+                padding: 50px 30px; 
+                border-radius: 25px;
+            }
             .welcome-title { font-size: 2.5rem; }
-            .welcome-card { padding: 50px 40px; }
-            .form-input { padding: 18px 22px; }
-            .btn { padding: 20px 50px; font-size: 1.2rem; }
-            .envelope-container { 
-                bottom: 10vh;
-                padding: 0 15px;
+            .welcome-subtitle { font-size: 1.4rem; }
+            .form-label { font-size: 1.2rem; }
+            .form-input { 
+                padding: 20px; 
+                font-size: 1.2rem; 
             }
-            .envelope-hint {
-                font-size: 1.3rem;
-                margin-bottom: 20px;
+            
+            .btn { 
+                padding: 20px 45px; 
+                font-size: 1.2rem;
+                gap: 15px;
             }
-            .admin-content {
-                padding: 40px 30px;
+            .btn-large { 
+                padding: 25px 55px; 
+                font-size: 1.4rem;
             }
-            .admin-btn {
-                padding: 16px 30px;
-                font-size: 1.1rem;
+            
+            .main-header { padding: 60px 20px 40px; }
+            .countdown-container { 
+                padding: 50px 30px; 
+                border-radius: 30px;
+            }
+            
+            .letter-container { 
+                padding: 50px 30px; 
+                border-width: 12px;
+                border-radius: 30px;
+            }
+            .letter-header { 
+                font-size: 2rem; 
+                padding-bottom: 30px;
+            }
+            .letter-content { 
+                font-size: 1.4rem; 
+                padding: 30px; 
+                line-height: 2;
+            }
+            
+            .calendar-container { 
+                padding: 50px 30px; 
+                border-radius: 30px;
+            }
+            .calendar-title { 
+                font-size: 2.2rem; 
+                margin-bottom: 50px;
+            }
+            .calendar-title::before,
+            .calendar-title::after {
+                display: none;
+            }
+            
+            .social-links {
+                bottom: 20px;
+                right: 20px;
+                gap: 20px;
+            }
+            .social-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.6rem;
+            }
+            
+            .notification {
+                top: 20px;
+                right: 20px;
+                left: 20px;
+                max-width: none;
+                padding: 20px 25px;
+                font-size: 1.2rem;
+            }
+            
+            .envelope-hint { 
+                font-size: 1.4rem; 
+                flex-direction: column;
+                gap: 10px;
+            }
+            .envelope-section { 
+                padding: 0 20px; 
+                bottom: 20vh;
+            }
+            
+            .container { padding: 15px; }
+            .main-container { padding: 20px 15px 80px; }
+        }
+        
+        @media (max-width: 380px) {
+            .year-display { font-size: 3.2rem; }
+            .countdown-value { font-size: 4rem; }
+            .countdown-label { font-size: 1.5rem; }
+            .countdown-item { padding: 40px 25px; }
+            
+            .welcome-title { font-size: 2.2rem; }
+            .welcome-card { padding: 40px 25px; }
+            
+            .holiday-card { padding: 35px 25px; }
+            .holiday-card-title { font-size: 1.8rem; }
+            .holiday-card-date { font-size: 1.3rem; }
+            
+            .btn { padding: 18px 35px; }
+            .btn-large { padding: 22px 45px; }
+        }
+        
+        /* ========== 打印样式 ========== */
+        @media print {
+            .welcome-overlay,
+            .social-links,
+            .fireworks-overlay,
+            .particle-text-container,
+            .envelope-section,
+            .letter-overlay,
+            .calendar-overlay,
+            .admin-overlay,
+            .loading-overlay,
+            .notification,
+            .btn,
+            .stars,
+            #particles-js {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .main-content.active {
+                opacity: 1 !important;
+                transform: none !important;
+            }
+            
+            .countdown-container,
+            .calendar-container {
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+                background: white !important;
+                color: black !important;
             }
         }
     </style>
 </head>
 <body>
     <!-- 星空背景 -->
-    <div class="starfield" id="starfield"></div>
+    <div class="universe-container" id="universe"></div>
     
     <!-- 粒子背景 -->
     <div id="particles-js"></div>
     
-    <!-- 黑色过渡层 -->
-    <div class="transition-overlay" id="transitionOverlay"></div>
+    <!-- 烟花特效层 -->
+    <div class="fireworks-overlay" id="fireworksOverlay"></div>
     
-    <!-- 粒子文字区域 -->
+    <!-- 粒子文字容器 -->
     <div class="particle-text-container" id="particleTextContainer">
-        <canvas class="particle-canvas" id="particleCanvas"></canvas>
+        <canvas id="particle-canvas"></canvas>
     </div>
     
-    <!-- 烟花特效层 -->
-    <div class="firework-overlay" id="fireworkOverlay"></div>
-    
-    <!-- 信封按钮 -->
-    <div class="envelope-container" id="envelopeContainer">
+    <!-- 信封按钮区域 -->
+    <div class="envelope-section" id="envelopeSection">
         <div class="envelope-hint">
-            <i class="fas fa-gift"></i> 点击查看您的新年贺卡
+            <i class="fas fa-gift"></i>
+            <span>点击查看您的专属节日祝福</span>
         </div>
-        <button class="btn envelope-btn" id="envelopeButton">
+        <button class="btn btn-large" id="envelopeBtn">
             <i class="fas fa-envelope-open-text"></i>
-            开启新年祝福
+            开启节日祝福
         </button>
     </div>
     
     <!-- 加载动画 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
-        <div class="loading-text" id="loadingText">AI正在为您创作新年祝福...</div>
+        <div class="loading-text" id="loadingText">AI正在为您创作节日祝福...</div>
     </div>
     
     <!-- 欢迎界面 -->
-    <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-overlay" id="welcomeOverlay">
         <div class="welcome-card">
-            <h1 class="welcome-title">🎉 2026新年倒计时 🎉</h1>
-            <p style="color: #33CCFF; margin-bottom: 40px; font-size: 1.4rem; letter-spacing: 2px;">开启您的专属跨年之旅</p>
+            <h1 class="welcome-title">🎉 智能节日倒计时系统 🎉</h1>
+            <p class="welcome-subtitle">开启您的专属节日旅程</p>
             
             <form id="userForm">
                 <div class="form-group">
-                    <label style="color: #FFCC00; display: block; margin-bottom: 18px; font-size: 1.3rem;">
-                        <i class="fas fa-user"></i> 真实姓名
+                    <label class="form-label">
+                        <i class="fas fa-user"></i>
+                        您的姓名
                     </label>
-                    <input type="text" id="userName" class="form-input" placeholder="请输入您的真实姓名" required>
+                    <input type="text" id="userName" class="form-input" 
+                           placeholder="请输入您的真实姓名" required 
+                           autocomplete="name">
                 </div>
                 
                 <div class="form-group">
-                    <label style="color: #FFCC00; display: block; margin-bottom: 18px; font-size: 1.3rem;">
-                        <i class="fas fa-birthday-cake"></i> 真实年龄
+                    <label class="form-label">
+                        <i class="fas fa-birthday-cake"></i>
+                        您的年龄
                     </label>
-                    <input type="number" id="userAge" class="form-input" placeholder="请输入您的年龄（1-120）" min="1" max="120" required>
+                    <input type="number" id="userAge" class="form-input" 
+                           placeholder="请输入您的年龄（1-120）" 
+                           min="1" max="120" required
+                           autocomplete="off">
                 </div>
                 
-                <button type="submit" class="btn" style="margin-top: 20px;">
-                    <i class="fas fa-rocket"></i> 开启跨年倒计时
+                <button type="submit" class="btn btn-large" style="margin-top: 30px;">
+                    <i class="fas fa-rocket"></i>
+                    开启智能倒计时
                 </button>
             </form>
         </div>
     </div>
     
     <!-- 主内容区域 -->
-    <div class="main-content" id="mainContent">
-        <div class="header">
-            <div class="year-display" id="yearDisplay">2025</div>
-            <p style="color: #33CCFF; font-size: 2rem; margin-top: 15px; letter-spacing: 3px;">距离2026新年还有</p>
-        </div>
-        
-        <div class="countdown-container">
-            <h2 class="countdown-title">新年倒计时</h2>
-            <div class="countdown-grid" id="countdown">
-                <div class="countdown-item">
-                    <div class="countdown-value" id="days">00</div>
-                    <div class="countdown-label">天</div>
+    <div class="main-container">
+        <div class="main-content" id="mainContent">
+            <!-- 头部区域 -->
+            <header class="main-header">
+                <div class="year-display" id="yearDisplay">2025</div>
+                <p class="countdown-prompt">
+                    距离 <span id="nextHolidayName">元旦</span> 还有
+                </p>
+            </header>
+            
+            <!-- 倒计时区域 -->
+            <section class="countdown-section">
+                <div class="countdown-container">
+                    <h2 class="countdown-title">节日倒计时</h2>
+                    
+                    <div class="countdown-grid" id="countdownGrid">
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="days">00</div>
+                            <div class="countdown-label">天</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="hours">00</div>
+                            <div class="countdown-label">时</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="minutes">00</div>
+                            <div class="countdown-label">分</div>
+                        </div>
+                        <div class="countdown-item">
+                            <div class="countdown-value" id="seconds">00</div>
+                            <div class="countdown-label">秒</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="countdown-item">
-                    <div class="countdown-value" id="hours">00</div>
-                    <div class="countdown-label">时</div>
-                </div>
-                <div class="countdown-item">
-                    <div class="countdown-value" id="minutes">00</div>
-                    <div class="countdown-label">分</div>
-                </div>
-                <div class="countdown-item">
-                    <div class="countdown-value" id="seconds">00</div>
-                    <div class="countdown-label">秒</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 测试按钮 -->
-        <div style="text-align: center; margin-top: 60px; display: none;" id="testButtons">
-            <button class="btn" id="testNewYearBtn">
-                <i class="fas fa-fire"></i> 测试新年特效
-            </button>
+            </section>
         </div>
     </div>
     
     <!-- 新年贺卡 -->
-    <div class="letter-container" id="letterContainer">
-        <div class="letter" id="letter">
+    <div class="letter-overlay" id="letterOverlay">
+        <div class="letter-container" id="letterContainer">
             <div class="letter-header">
                 致：<span id="letterRecipient">亲爱的朋友</span>
-                <span id="letterAge" style="font-size: 1.4rem; color: #888; margin-left: 12px;"></span>
+                <span id="letterAge" style="font-size: 1.6rem; color: #888; margin-left: 15px;"></span>
             </div>
             <div class="letter-content" id="letterContent">
-                <!-- AI生成的新年祝福会显示在这里 -->
+                <!-- AI生成的节日祝福会显示在这里 -->
             </div>
-            <button class="btn" id="closeLetterBtn" style="margin-top: 40px;">
-                <i class="fas fa-calendar-alt"></i> 查看2026年节日日历
-            </button>
+            <div style="text-align: center; margin-top: 50px;">
+                <button class="btn btn-large" id="calendarBtn">
+                    <i class="fas fa-calendar-alt"></i>
+                    查看全年节日日历
+                </button>
+            </div>
         </div>
     </div>
     
     <!-- 节日日历 -->
-    <div class="calendar-container" id="calendarContainer">
-        <h2 style="color: #FFCC00; text-align: center; margin-bottom: 60px; font-size: 3rem; letter-spacing: 4px;">🎊 2026年节日日历 🎊</h2>
-        <div class="holiday-grid" id="holidayGrid">
-            <!-- 节日卡片会动态生成 -->
-        </div>
-        <div style="text-align: center; margin-top: 60px;">
-            <button class="btn" id="backToMainBtn">
-                <i class="fas fa-home"></i> 返回主页
-            </button>
+    <div class="calendar-overlay" id="calendarOverlay">
+        <div class="calendar-container">
+            <h2 class="calendar-title">🎊 全年重要节日日历 🎊</h2>
+            <div class="holiday-grid" id="holidayGrid">
+                <!-- 节日卡片会动态生成 -->
+            </div>
+            <div style="text-align: center; margin-top: 60px;">
+                <button class="btn btn-large" id="backToMainBtn">
+                    <i class="fas fa-home"></i>
+                    返回主页继续倒计时
+                </button>
+            </div>
         </div>
     </div>
     
@@ -1057,1005 +1650,951 @@
         <span id="notificationText">通知消息</span>
     </div>
     
-    <!-- 管理员面板 -->
-    <div class="admin-panel" id="adminPanel">
-        <div class="admin-content">
-            <h2 class="admin-title"><i class="fas fa-cogs"></i> 管理员控制台</h2>
-            
-            <div class="admin-stats">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalUsers">0</div>
-                    <div class="stat-label">今日用户</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="activeUsers">1</div>
-                    <div class="stat-label">当前在线</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalVisits">1</div>
-                    <div class="stat-label">总访问量</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="currentYear">2025</div>
-                    <div class="stat-label">当前年份</div>
-                </div>
-            </div>
-            
-            <div class="admin-time-control">
-                <h3 style="color: #33CCFF; margin-bottom: 30px; font-size: 1.6rem;">
-                    <i class="fas fa-clock"></i> 时间控制系统
-                </h3>
-                <div style="margin-bottom: 25px; color: rgba(255,255,255,0.9); font-size: 1.3rem;">
-                    系统时间: <span id="adminCurrentTime">--:--:--</span>
-                </div>
-                <div class="time-input-group">
-                    <input type="number" id="adminYear" class="time-input" placeholder="年" value="2025" min="2000" max="2030">
-                    <input type="number" id="adminMonth" class="time-input" placeholder="月" value="12" min="1" max="12">
-                    <input type="number" id="adminDay" class="time-input" placeholder="日" value="31" min="1" max="31">
-                    <input type="number" id="adminHour" class="time-input" placeholder="时" value="23" min="0" max="23">
-                    <input type="number" id="adminMinute" class="time-input" placeholder="分" value="59" min="0" max="59">
-                    <input type="number" id="adminSecond" class="time-input" placeholder="秒" value="59" min="0" max="59">
-                </div>
-            </div>
-            
-            <!-- 管理员控制按钮 - 固定在底部 -->
-            <div class="admin-control-buttons">
-                <button class="admin-btn admin-btn-primary" id="setTimeBtn">
-                    <i class="fas fa-play"></i> 设置时间
-                </button>
-                <button class="admin-btn admin-btn-secondary" id="resetTimeBtn">
-                    <i class="fas fa-redo"></i> 重置时间
-                </button>
-                <button class="admin-btn admin-btn-danger" id="triggerNewYearBtn">
-                    <i class="fas fa-fire"></i> 触发特效
-                </button>
-            </div>
-            
-            <div style="text-align: center; margin-top: 50px;">
-                <button class="btn" id="closeAdminBtn" style="background: rgba(255,255,255,0.15); padding: 20px 40px;">
-                    <i class="fas fa-times"></i> 关闭控制台
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <!-- 音频元素 -->
-    <audio id="newYearAudio" preload="auto">
-        <source src="newyear.mp3" type="audio/mp3">
+    <audio id="celebrationAudio" preload="auto">
         <source src="https://assets.mixkit.co/music/preview/mixkit-happy-new-year-2023-1134.mp3" type="audio/mp3">
     </audio>
 
     <script>
-        // ========== 粒子文字系统 ==========
-        class ParticleTextSystem {
+        // 智能节日倒计时系统 - 完整版
+        class CompleteHolidayCountdown {
             constructor() {
-                this.canvas = document.getElementById('particleCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.particles = [];
-                this.textPositions = [];
-                this.currentText = '';
-                this.isAnimating = false;
-                this.particleCount = 1500; // 更多粒子
-                this.textSize = 90;
-                this.texts = [];
-                this.currentTextIndex = 0;
-                this.isClearing = false;
+                // 初始化所有DOM元素
+                this.initializeElements();
                 
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
-            }
-            
-            resizeCanvas() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-            }
-            
-            setTexts(texts) {
-                this.texts = texts;
-                this.currentTextIndex = 0;
-                this.startAnimation();
-            }
-            
-            startAnimation() {
-                if (this.currentTextIndex >= this.texts.length) {
-                    setTimeout(() => {
-                        document.getElementById('envelopeContainer').classList.add('active');
-                    }, 1500);
-                    return;
-                }
-                
-                this.currentText = this.texts[this.currentTextIndex];
-                this.particles = [];
-                this.isAnimating = true;
-                this.isClearing = false;
-                
-                // 获取文字像素数据
-                this.ctx.font = `bold ${this.textSize}px 'Ma Shan Zheng', cursive`;
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillStyle = 'white';
-                
-                const textWidth = this.ctx.measureText(this.currentText).width;
-                const x = this.canvas.width / 2;
-                const y = this.canvas.height / 2;
-                
-                // 使用离屏canvas获取像素数据
-                const offscreenCanvas = document.createElement('canvas');
-                offscreenCanvas.width = Math.max(textWidth + 100, 100);
-                offscreenCanvas.height = this.textSize + 100;
-                const offscreenCtx = offscreenCanvas.getContext('2d');
-                
-                offscreenCtx.font = `bold ${this.textSize}px 'Ma Shan Zheng', cursive`;
-                offscreenCtx.textAlign = 'center';
-                offscreenCtx.textBaseline = 'middle';
-                offscreenCtx.fillStyle = 'white';
-                offscreenCtx.fillText(this.currentText, offscreenCanvas.width/2, offscreenCanvas.height/2);
-                
-                const imageData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-                this.textPositions = [];
-                
-                // 收集文字像素位置（采样密度增加）
-                for (let y = 0; y < offscreenCanvas.height; y += 3) {
-                    for (let x = 0; x < offscreenCanvas.width; x += 3) {
-                        const alpha = imageData.data[(y * offscreenCanvas.width + x) * 4 + 3];
-                        if (alpha > 128) {
-                            this.textPositions.push({
-                                x: x + (this.canvas.width - offscreenCanvas.width)/2,
-                                y: y + (this.canvas.height - offscreenCanvas.height)/2
-                            });
-                        }
-                    }
-                }
-                
-                // 创建粒子 - 粒子大小减小
-                const colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#9966FF', '#FF00FF'];
-                
-                for (let i = 0; i < this.particleCount; i++) {
-                    const targetPos = this.textPositions[Math.floor(Math.random() * this.textPositions.length)];
-                    const startX = Math.random() * this.canvas.width;
-                    const startY = Math.random() * this.canvas.height;
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    
-                    this.particles.push({
-                        x: startX,
-                        y: startY,
-                        targetX: targetPos ? targetPos.x : x,
-                        targetY: targetPos ? targetPos.y : y,
-                        size: Math.random() * 1.5 + 0.5, // 更小的粒子
-                        color: color,
-                        speed: Math.random() * 3 + 1,
-                        vx: 0,
-                        vy: 0,
-                        arrived: false,
-                        opacity: 1,
-                        originalSize: Math.random() * 1.5 + 0.5
-                    });
-                }
-                
-                this.animate();
-            }
-            
-            animate() {
-                if (!this.isAnimating) return;
-                
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                let arrivedCount = 0;
-                
-                for (let particle of this.particles) {
-                    if (this.isClearing) {
-                        // 清除模式：粒子散开
-                        particle.vx += (Math.random() - 0.5) * 8;
-                        particle.vy += (Math.random() - 0.5) * 8;
-                        particle.opacity -= 0.03;
-                        
-                        if (particle.opacity <= 0) {
-                            particle.arrived = true;
-                        }
-                    } else {
-                        // 聚集模式
-                        const dx = particle.targetX - particle.x;
-                        const dy = particle.targetY - particle.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance > 1.5) {
-                            const angle = Math.atan2(dy, dx);
-                            particle.vx = Math.cos(angle) * particle.speed * 0.15;
-                            particle.vy = Math.sin(angle) * particle.speed * 0.15;
-                            
-                            particle.x += particle.vx;
-                            particle.y += particle.vy;
-                        } else {
-                            particle.arrived = true;
-                        }
-                    }
-                    
-                    // 绘制粒子
-                    if (particle.opacity > 0) {
-                        this.ctx.globalAlpha = particle.opacity;
-                        this.ctx.beginPath();
-                        this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                        this.ctx.fillStyle = particle.color;
-                        this.ctx.fill();
-                        
-                        // 发光效果
-                        const gradient = this.ctx.createRadialGradient(
-                            particle.x, particle.y, 0,
-                            particle.x, particle.y, particle.size * 6
-                        );
-                        gradient.addColorStop(0, particle.color + 'FF');
-                        gradient.addColorStop(1, particle.color + '00');
-                        
-                        this.ctx.beginPath();
-                        this.ctx.arc(particle.x, particle.y, particle.size * 6, 0, Math.PI * 2);
-                        this.ctx.fillStyle = gradient;
-                        this.ctx.fill();
-                        this.ctx.globalAlpha = 1;
-                    }
-                    
-                    if (particle.arrived) arrivedCount++;
-                }
-                
-                if (!this.isClearing && arrivedCount === this.particles.length) {
-                    // 所有粒子到位，显示文字3秒后清除
-                    setTimeout(() => {
-                        this.isClearing = true;
-                        setTimeout(() => {
-                            this.currentTextIndex++;
-                            this.startAnimation();
-                        }, 1500);
-                    }, 3000);
-                }
-                
-                requestAnimationFrame(() => this.animate());
-            }
-        }
-
-        // ========== 烟花特效系统 ==========
-        class FireworkSystem {
-            constructor() {
-                this.container = document.getElementById('fireworkOverlay');
-                this.colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#FF00FF', '#FF9900', '#33FFCC', '#FF33FF', '#33FF33'];
-                this.fireworkCount = 0;
-            }
-            
-            createFirework(x, y, count = 120) { // 更多粒子
-                for (let i = 0; i < count; i++) {
-                    const firework = document.createElement('div');
-                    firework.className = 'firework';
-                    
-                    const angle = Math.random() * Math.PI * 2;
-                    const distance = Math.random() * 350 + 100; // 更远的距离
-                    const endX = Math.cos(angle) * distance;
-                    const endY = Math.sin(angle) * distance;
-                    const size = Math.random() * 8 + 4; // 更大的粒子
-                    const duration = Math.random() * 1 + 1.5; // 更长的动画
-                    
-                    firework.style.cssText = `
-                        --startX: 0px;
-                        --startY: 0px;
-                        --endX: ${endX}px;
-                        --endY: ${endY}px;
-                        background: ${this.colors[Math.floor(Math.random() * this.colors.length)]};
-                        left: ${x}px;
-                        top: ${y}px;
-                        width: ${size}px;
-                        height: ${size}px;
-                        animation-duration: ${duration}s;
-                        box-shadow: 0 0 30px ${this.colors[Math.floor(Math.random() * this.colors.length)]};
-                    `;
-                    
-                    this.container.appendChild(firework);
-                    
-                    // 移除动画完成的元素
-                    setTimeout(() => {
-                        if (firework.parentNode === this.container) {
-                            this.container.removeChild(firework);
-                        }
-                    }, duration * 1000);
-                }
-                
-                // 播放爆炸音效（如果有）
-                this.playExplosionSound();
-            }
-            
-            playExplosionSound() {
-                // 可以添加爆炸音效
-                try {
-                    const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQ');
-                    audio.volume = 0.3;
-                    audio.play().catch(() => {});
-                } catch (e) {}
-            }
-            
-            createMultipleFireworks(count = 12) { // 更多烟花
-                for (let i = 0; i < count; i++) {
-                    const delay = i * 200;
-                    setTimeout(() => {
-                        const x = Math.random() * window.innerWidth;
-                        const y = Math.random() * window.innerHeight * 0.6;
-                        this.createFirework(x, y, 150); // 每个烟花更多粒子
-                    }, delay);
-                }
-            }
-            
-            startFireworks() {
-                this.container.classList.add('active');
-                this.fireworkCount = 0;
-                
-                // 创建初始烟花 - 更多更密集
-                this.createMultipleFireworks(15);
-                
-                // 持续创建烟花 - 更频繁
-                this.fireworkInterval = setInterval(() => {
-                    this.createMultipleFireworks(6);
-                    this.fireworkCount++;
-                    
-                    // 每5次烟花后创建一次超级烟花
-                    if (this.fireworkCount % 5 === 0) {
-                        this.createSuperFirework();
-                    }
-                    
-                    // 每10次烟花后创建一次礼花
-                    if (this.fireworkCount % 10 === 0) {
-                        this.createConfettiBurst();
-                    }
-                }, 800); // 更频繁
-                
-                // 定期创建礼花
-                this.confettiInterval = setInterval(() => {
-                    this.createConfettiBurst();
-                }, 2500); // 更频繁的礼花
-            }
-            
-            createSuperFirework() {
-                const x = window.innerWidth / 2;
-                const y = window.innerHeight / 3;
-                
-                // 创建中心烟花
-                this.createFirework(x, y, 200);
-                
-                // 创建环绕烟花
-                setTimeout(() => {
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i * Math.PI) / 4;
-                        const distance = 200;
-                        const childX = x + Math.cos(angle) * distance;
-                        const childY = y + Math.sin(angle) * distance;
-                        
-                        setTimeout(() => {
-                            this.createFirework(childX, childY, 100);
-                        }, i * 100);
-                    }
-                }, 300);
-            }
-            
-            createConfettiBurst() {
-                // 多种礼花效果
-                for (let i = 0; i < 3; i++) {
-                    setTimeout(() => {
-                        confetti({
-                            particleCount: 300, // 更多粒子
-                            spread: 150, // 更广的扩散
-                            origin: { 
-                                x: Math.random() * 0.6 + 0.2,
-                                y: Math.random() * 0.4 + 0.3
-                            },
-                            colors: this.colors,
-                            shapes: ['circle', 'square'], // 多种形状
-                            scalar: 1.2 // 更大
-                        });
-                    }, i * 300);
-                }
-            }
-            
-            stopFireworks() {
-                clearInterval(this.fireworkInterval);
-                clearInterval(this.confettiInterval);
-                this.container.classList.remove('active');
-                this.container.innerHTML = '';
-            }
-        }
-
-        // ========== AI祝福生成器 ==========
-        class AIBlessingGenerator {
-            constructor() {
-                this.templates = {
-                    children: [
-                        `亲爱的{{name}}小朋友，{{age}}岁新年快乐！在这辞旧迎新的美好时刻，愿你的笑容如阳光般灿烂，愿你的童年如童话般精彩。新年新气象，愿你健康快乐地成长，学习进步，天天向上！记住，每一个梦想都值得追逐，每一次努力都会开花结果。愿2026年的每一天都充满惊喜与欢乐！`,
-                        `{{name}}宝贝，{{age}}岁新年好！你是最闪亮的小星星，愿新的一年里更加闪耀！快乐成长，无忧无虑，让每一天都像过新年一样开心！爸爸妈妈的骄傲，老师眼中的好孩子，愿你在新的一年里继续绽放光彩！`
-                    ],
-                    youth: [
-                        `致{{age}}岁的{{name}}：青春正当时，新年新起点！愿你在2026年学业有成，金榜题名；愿你的梦想如星辰般璀璨，愿你的努力如春风般温暖。勇敢追梦，不负韶华！保持热情，迎接挑战，在新的一年里创造属于自己的辉煌！`,
-                        `{{name}}，{{age}}岁的你正值大好年华！新年愿你勇敢追梦，展现自我，让青春在奋斗中闪光！愿你的2026年充满机遇，收获满满的成功与喜悦！`
-                    ],
-                    adult: [
-                        `尊敬的{{name}}，{{age}}岁新年好！愿您在新的一年里事业蒸蒸日上，家庭幸福美满。工作顺利，身体健康，心想事成！愿2026年带给你无限可能，实现所有的梦想与目标！`,
-                        `{{name}}，{{age}}岁正是黄金时期！新年大展宏图，前程似锦！愿2026年成为你人生中又一个丰收之年，愿所有的努力都能得到回报！`
-                    ],
-                    elder: [
-                        `敬爱的{{name}}长者，{{age}}载春秋见证了岁月的美好。新年安康，愿您福如东海，寿比南山。享受天伦之乐，安享幸福晚年！愿新的一年带给您健康、平安和无限的欢乐！`,
-                        `{{name}}前辈，{{age}}岁新年快乐！岁月沉淀智慧，新年再添福气！愿您健康长寿，笑口常开！愿每一天都充满阳光和温暖！`
-                    ]
-                };
-            }
-            
-            async generateBlessing(name, age) {
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        const blessing = this.createBlessing(name, age);
-                        resolve(blessing);
-                    }, 2000);
-                });
-            }
-            
-            createBlessing(name, age) {
-                let category = 'adult';
-                if (age < 12) category = 'children';
-                else if (age < 18) category = 'youth';
-                else if (age >= 60) category = 'elder';
-                
-                const baseText = this.templates[category][0];
-                const enhancedText = baseText
-                    .replace(/{{name}}/g, name)
-                    .replace(/{{age}}/g, age);
-                
-                const additions = {
-                    children: `\n\n新的一年，愿你保持童真，探索世界的好奇心永不熄灭。每个梦想都值得追求，每次尝试都是成长的礼物。愿你的每一天都充满欢笑与奇迹！`,
-                    youth: `\n\n2026年，愿你勇敢追梦，不畏挑战。在知识的海洋中遨游，在青春的舞台上绽放。相信自己的潜力，创造无限可能！`,
-                    adult: `\n\n新的一年，愿你事业与家庭双丰收，健康与快乐常相伴。每个努力都有回报，每个选择都带来成长。愿2026年是你最精彩的一年！`,
-                    elder: `\n\n新的一年，愿您享受生活的每一刻，健康平安，笑口常开。您的智慧是家庭最宝贵的财富。愿岁月静好，幸福安康！`
-                };
-                
-                return enhancedText + additions[category];
-            }
-        }
-
-        // ========== 主应用程序 ==========
-        class NewYearApp {
-            constructor() {
+                // 状态变量
                 this.currentUser = null;
-                this.audioEnabled = true;
-                this.fireworkActive = false;
-                this.aiGenerator = new AIBlessingGenerator();
-                this.particleText = new ParticleTextSystem();
-                this.fireworkSystem = new FireworkSystem();
-                this.audio = document.getElementById('newYearAudio');
-                this.audioPlaying = false;
+                this.currentHoliday = null;
                 this.countdownInterval = null;
-                this.textSequence = [
-                    "辞去2025，迎接2026",
-                    "2026已经到来",
-                    "", // 会被替换为用户问候
-                    "祝你在2026年心想事成",
-                    "学业有成，工作顺利",
-                    "下2025的列车，转2026的列车",
-                    "等2027年，我们再见"
-                ];
-                this.holidaysData = [];
-                this.isManualTime = false;
-                this.manualDateTime = null;
-                this.visitorCount = localStorage.getItem('visitorCount') ? parseInt(localStorage.getItem('visitorCount')) : 0;
-                this.todayUsers = localStorage.getItem('todayUsers') ? parseInt(localStorage.getItem('todayUsers')) : 0;
-                this.lastVisitDate = localStorage.getItem('lastVisitDate');
+                this.isCelebrating = false;
+                this.audioPlaying = false;
+                this.particleSystem = null;
+                this.fireworkActive = false;
+                this.currentYear = new Date().getFullYear();
                 
+                // 节日数据
+                this.holidays = [];
+                this.holidayColors = {
+                    '元旦': '#FF3366',
+                    '春节': '#FFCC00',
+                    '清明节': '#00CC88',
+                    '劳动节': '#33CCFF',
+                    '端午节': '#9966FF',
+                    '中秋节': '#FF9900',
+                    '国庆节': '#FF3333',
+                    '情人节': '#FF6699',
+                    '元宵节': '#FF9966',
+                    '重阳节': '#9966FF'
+                };
+                
+                // 初始化系统
                 this.init();
             }
             
-            init() {
-                this.createStarfield();
-                this.initParticles();
-                this.initEventListeners();
-                this.loadHolidaysData();
-                this.prepareAudio();
-                this.updateVisitorStats();
-                this.checkNewDay();
-                this.checkSavedUser();
+            initializeElements() {
+                // 倒计时显示元素
+                this.daysEl = document.getElementById('days');
+                this.hoursEl = document.getElementById('hours');
+                this.minutesEl = document.getElementById('minutes');
+                this.secondsEl = document.getElementById('seconds');
+                this.yearDisplayEl = document.getElementById('yearDisplay');
+                this.holidayNameEl = document.getElementById('nextHolidayName');
                 
-                if (window.location.href.includes('test')) {
-                    document.getElementById('testButtons').style.display = 'block';
-                }
+                // 欢迎界面元素
+                this.welcomeOverlay = document.getElementById('welcomeOverlay');
+                this.userForm = document.getElementById('userForm');
+                this.userNameInput = document.getElementById('userName');
+                this.userAgeInput = document.getElementById('userAge');
+                this.mainContent = document.getElementById('mainContent');
+                
+                // 节日信息元素
+                this.letterRecipientEl = document.getElementById('letterRecipient');
+                this.letterAgeEl = document.getElementById('letterAge');
+                this.letterContentEl = document.getElementById('letterContent');
+                
+                // 特效元素
+                this.fireworksOverlay = document.getElementById('fireworksOverlay');
+                this.particleTextContainer = document.getElementById('particleTextContainer');
+                this.envelopeSection = document.getElementById('envelopeSection');
+                this.letterOverlay = document.getElementById('letterOverlay');
+                this.letterContainer = document.getElementById('letterContainer');
+                this.calendarOverlay = document.getElementById('calendarOverlay');
+                this.holidayGrid = document.getElementById('holidayGrid');
+                
+                // 按钮元素
+                this.envelopeBtn = document.getElementById('envelopeBtn');
+                this.calendarBtn = document.getElementById('calendarBtn');
+                this.backToMainBtn = document.getElementById('backToMainBtn');
+                
+                // 音频元素
+                this.celebrationAudio = document.getElementById('celebrationAudio');
+                
+                // 通知元素
+                this.notification = document.getElementById('notification');
+                this.notificationText = document.getElementById('notificationText');
+                
+                // 加载元素
+                this.loadingOverlay = document.getElementById('loadingOverlay');
+                this.loadingText = document.getElementById('loadingText');
+                
+                // 宇宙背景
+                this.universe = document.getElementById('universe');
             }
             
-            createStarfield() {
-                const starfield = document.getElementById('starfield');
-                for (let i = 0; i < 300; i++) { // 更多星星
+            init() {
+                this.createUniverse();
+                this.initParticles();
+                this.setupHolidayData();
+                this.setupEventListeners();
+                this.checkSavedUser();
+                this.prepareAudio();
+                
+                // 预加载特效
+                setTimeout(() => this.preloadEffects(), 1000);
+            }
+            
+            createUniverse() {
+                // 创建星云
+                for (let i = 0; i < 5; i++) {
+                    const nebula = document.createElement('div');
+                    nebula.className = 'nebula';
+                    nebula.style.width = `${Math.random() * 400 + 200}px`;
+                    nebula.style.height = nebula.style.width;
+                    nebula.style.left = `${Math.random() * 100}%`;
+                    nebula.style.top = `${Math.random() * 100}%`;
+                    nebula.style.background = `radial-gradient(circle, 
+                        hsl(${Math.random() * 360}, 70%, 60%) 0%, 
+                        transparent 70%)`;
+                    nebula.style.opacity = Math.random() * 0.15 + 0.05;
+                    this.universe.appendChild(nebula);
+                }
+                
+                // 创建星星
+                const starCount = 300;
+                for (let i = 0; i < starCount; i++) {
                     const star = document.createElement('div');
                     star.className = 'star';
                     star.style.left = `${Math.random() * 100}%`;
                     star.style.top = `${Math.random() * 100}%`;
-                    star.style.width = star.style.height = `${Math.random() * 3 + 1}px`;
-                    star.style.opacity = Math.random() * 0.7 + 0.3;
-                    star.style.setProperty('--duration', `${Math.random() * 5 + 3}s`);
-                    starfield.appendChild(star);
+                    
+                    const size = Math.random() * 3 + 1;
+                    star.style.width = `${size}px`;
+                    star.style.height = `${size}px`;
+                    
+                    star.style.setProperty('--duration', `${Math.random() * 4 + 2}s`);
+                    star.style.setProperty('--min-opacity', `${Math.random() * 0.3 + 0.1}`);
+                    star.style.setProperty('--max-opacity', `${Math.random() * 0.5 + 0.3}`);
+                    star.style.setProperty('--glow', `${Math.random() * 10 + 5}px`);
+                    star.style.setProperty('--glow-opacity', `${Math.random() * 0.5 + 0.1}`);
+                    
+                    this.universe.appendChild(star);
                 }
+                
+                // 创建流星
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        this.createShootingStar();
+                    }, i * 2000);
+                }
+                
+                // 定期创建流星
+                setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        this.createShootingStar();
+                    }
+                }, 5000);
+            }
+            
+            createShootingStar() {
+                const shootingStar = document.createElement('div');
+                shootingStar.className = 'shooting-star';
+                shootingStar.style.left = `${Math.random() * 20}%`;
+                shootingStar.style.top = `${Math.random() * 20}%`;
+                shootingStar.style.setProperty('--angle', `${Math.random() * 30 + 15}deg`);
+                shootingStar.style.setProperty('--speed', `${Math.random() * 2 + 1}s`);
+                this.universe.appendChild(shootingStar);
+                
+                setTimeout(() => {
+                    shootingStar.remove();
+                }, 3000);
             }
             
             initParticles() {
                 particlesJS('particles-js', {
                     particles: {
-                        number: { value: 100, density: { enable: true, value_area: 800 } },
-                        color: { value: ["#FF3366", "#33CCFF", "#FFCC00"] },
-                        shape: { type: "circle" },
-                        opacity: { value: 0.4, random: true },
-                        size: { value: 2, random: true },
+                        number: { 
+                            value: 120, 
+                            density: { 
+                                enable: true, 
+                                value_area: 1000 
+                            } 
+                        },
+                        color: { 
+                            value: ["#FF3366", "#33CCFF", "#FFCC00", "#00CC88", "#9966FF"] 
+                        },
+                        shape: { 
+                            type: "circle",
+                            stroke: { width: 0, color: "#000000" }
+                        },
+                        opacity: { 
+                            value: 0.4, 
+                            random: true, 
+                            anim: { 
+                                enable: true, 
+                                speed: 1, 
+                                opacity_min: 0.1 
+                            } 
+                        },
+                        size: { 
+                            value: 2, 
+                            random: true, 
+                            anim: { 
+                                enable: true, 
+                                speed: 2, 
+                                size_min: 0.5 
+                            } 
+                        },
+                        line_linked: {
+                            enable: true,
+                            distance: 150,
+                            color: "#ffffff",
+                            opacity: 0.2,
+                            width: 1
+                        },
                         move: {
                             enable: true,
-                            speed: 2,
+                            speed: 1.5,
                             direction: "none",
-                            random: true
+                            random: true,
+                            straight: false,
+                            out_mode: "out",
+                            bounce: false,
+                            attract: { enable: false, rotateX: 600, rotateY: 1200 }
+                        }
+                    },
+                    interactivity: {
+                        detect_on: "canvas",
+                        events: {
+                            onhover: { enable: true, mode: "repulse" },
+                            onclick: { enable: true, mode: "push" },
+                            resize: true
                         }
                     }
                 });
             }
             
-            initEventListeners() {
-                document.getElementById('userForm').addEventListener('submit', (e) => this.handleUserSubmit(e));
-                document.getElementById('envelopeButton').addEventListener('click', () => this.showLetter());
-                document.getElementById('closeLetterBtn').addEventListener('click', () => this.closeLetter());
-                document.getElementById('backToMainBtn').addEventListener('click', () => this.backToMain());
-                document.addEventListener('click', () => this.enableAudio(), { once: true });
-                document.getElementById('testNewYearBtn')?.addEventListener('click', () => this.triggerNewYearEffects());
-                
-                // 管理员功能
-                this.initAdminAccess();
-                document.getElementById('setTimeBtn').addEventListener('click', () => this.setManualTimeAndReturn());
-                document.getElementById('resetTimeBtn').addEventListener('click', () => this.resetTimeAndReturn());
-                document.getElementById('triggerNewYearBtn').addEventListener('click', () => this.triggerNewYearEffectsFromAdmin());
-                document.getElementById('closeAdminBtn').addEventListener('click', () => this.closeAdminPanel());
-            }
-            
-            initAdminAccess() {
-                let ctrlCount = 0;
-                let secretInput = '';
-                const SECRET_CODE = '19996837879gxh';
-                
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Control' || e.key === 'Meta') {
-                        ctrlCount++;
-                        setTimeout(() => { ctrlCount = 0; }, 3000);
-                        
-                        if (ctrlCount >= 5) {
-                            const password = prompt('🔐 请输入管理员密码：');
-                            if (password === SECRET_CODE) {
-                                this.showAdminPanel();
-                            } else {
-                                this.showNotification('密码错误', 'error');
-                            }
-                            ctrlCount = 0;
+            setupHolidayData() {
+                // 完整的节日数据
+                this.holidays = [
+                    // 公历节日
+                    {
+                        name: "元旦",
+                        type: "solar",
+                        month: 1,
+                        day: 1,
+                        icon: "🎆",
+                        desc: "新的一年开始，放假3天，与家人朋友共度美好时光",
+                        duration: "放假3天",
+                        color: "#FF3366",
+                        getDate: function(year) {
+                            return new Date(year, 0, 1);
                         }
-                    }
+                    },
+                    {
+                        name: "情人节",
+                        type: "solar",
+                        month: 2,
+                        day: 14,
+                        icon: "💖",
+                        desc: "表达爱意的浪漫日子，与心爱的人共享甜蜜时光",
+                        duration: "1天",
+                        color: "#FF6699",
+                        getDate: function(year) {
+                            return new Date(year, 1, 14);
+                        }
+                    },
+                    {
+                        name: "清明节",
+                        type: "solar",
+                        month: 4,
+                        day: 4,
+                        icon: "🌿",
+                        desc: "祭祖扫墓的传统节日，也是踏青赏春的好时节",
+                        duration: "放假3天",
+                        color: "#00CC88",
+                        getDate: function(year) {
+                            return new Date(year, 3, 4);
+                        }
+                    },
+                    {
+                        name: "劳动节",
+                        type: "solar",
+                        month: 5,
+                        day: 1,
+                        icon: "👷",
+                        desc: "向劳动者致敬，享受5天小长假，放松身心",
+                        duration: "放假5天",
+                        color: "#33CCFF",
+                        getDate: function(year) {
+                            return new Date(year, 4, 1);
+                        }
+                    },
+                    {
+                        name: "国庆节",
+                        type: "solar",
+                        month: 10,
+                        day: 1,
+                        icon: "🇨🇳",
+                        desc: "庆祝新中国成立，享受7天黄金周假期",
+                        duration: "放假7天",
+                        color: "#FF3333",
+                        getDate: function(year) {
+                            return new Date(year, 9, 1);
+                        }
+                    },
                     
-                    if (e.key.length === 1) {
-                        secretInput += e.key;
-                        if (secretInput.includes(SECRET_CODE)) {
-                            this.showAdminPanel();
-                            secretInput = '';
+                    // 农历节日
+                    {
+                        name: "春节",
+                        type: "lunar",
+                        lunarMonth: 1,
+                        lunarDay: 1,
+                        icon: "🎉",
+                        desc: "农历新年，中国最重要的传统节日，阖家团圆的日子",
+                        duration: "放假7天",
+                        color: "#FFCC00",
+                        getDate: function(year) {
+                            // 春节日期（2025-2027准确数据）
+                            const springDates = {
+                                2025: new Date(2025, 0, 29),
+                                2026: new Date(2026, 1, 17),
+                                2027: new Date(2027, 1, 6),
+                                2028: new Date(2028, 1, 25),
+                                2029: new Date(2029, 1, 13)
+                            };
+                            return springDates[year] || new Date(year, 1, Math.floor(Math.random() * 15) + 8);
                         }
-                        if (secretInput.length > 20) secretInput = '';
+                    },
+                    {
+                        name: "元宵节",
+                        type: "lunar",
+                        lunarMonth: 1,
+                        lunarDay: 15,
+                        icon: "🏮",
+                        desc: "春节后的第一个月圆之夜，赏花灯、吃元宵",
+                        duration: "1天",
+                        color: "#FF9966",
+                        getDate: function(year) {
+                            // 元宵节在春节后15天
+                            const holiday = this.holidays.find(h => h.name === "春节");
+                            const springDate = holiday.getDate(year);
+                            return new Date(springDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+                        }.bind(this)
+                    },
+                    {
+                        name: "端午节",
+                        type: "lunar",
+                        lunarMonth: 5,
+                        lunarDay: 5,
+                        icon: "🎏",
+                        desc: "纪念屈原的传统节日，吃粽子、赛龙舟",
+                        duration: "放假3天",
+                        color: "#9966FF",
+                        getDate: function(year) {
+                            const dates = {
+                                2025: new Date(2025, 4, 31),
+                                2026: new Date(2026, 5, 20),
+                                2027: new Date(2027, 5, 9),
+                                2028: new Date(2028, 5, 28),
+                                2029: new Date(2029, 5, 17)
+                            };
+                            return dates[year] || new Date(year, 5, Math.floor(Math.random() * 10) + 10);
+                        }
+                    },
+                    {
+                        name: "中秋节",
+                        type: "lunar",
+                        lunarMonth: 8,
+                        lunarDay: 15,
+                        icon: "🌕",
+                        desc: "团圆佳节，赏月、吃月饼、共享天伦之乐",
+                        duration: "放假3天",
+                        color: "#FF9900",
+                        getDate: function(year) {
+                            const dates = {
+                                2025: new Date(2025, 9, 6),
+                                2026: new Date(2026, 8, 25),
+                                2027: new Date(2027, 8, 15),
+                                2028: new Date(2028, 9, 3),
+                                2029: new Date(2029, 9, 22)
+                            };
+                            return dates[year] || new Date(year, 9, Math.floor(Math.random() * 10) + 1);
+                        }
+                    },
+                    {
+                        name: "重阳节",
+                        type: "lunar",
+                        lunarMonth: 9,
+                        lunarDay: 9,
+                        icon: "⛰️",
+                        desc: "敬老爱老的传统节日，登高望远，赏菊饮酒",
+                        duration: "1天",
+                        color: "#9966FF",
+                        getDate: function(year) {
+                            // 重阳节在中秋节后约一个月
+                            const holiday = this.holidays.find(h => h.name === "中秋节");
+                            const midAutumnDate = holiday.getDate(year);
+                            return new Date(midAutumnDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        }.bind(this)
                     }
-                });
+                ];
             }
             
-            checkNewDay() {
-                const today = new Date().toDateString();
-                if (this.lastVisitDate !== today) {
-                    this.todayUsers = 1;
-                    localStorage.setItem('todayUsers', this.todayUsers);
-                    localStorage.setItem('lastVisitDate', today);
-                } else {
-                    this.todayUsers++;
-                    localStorage.setItem('todayUsers', this.todayUsers);
-                }
-            }
-            
-            updateVisitorStats() {
-                this.visitorCount++;
-                localStorage.setItem('visitorCount', this.visitorCount);
+            setupEventListeners() {
+                // 表单提交
+                this.userForm.addEventListener('submit', (e) => this.handleUserSubmit(e));
                 
-                document.getElementById('totalUsers').textContent = this.todayUsers;
-                document.getElementById('totalVisits').textContent = this.visitorCount;
-                document.getElementById('activeUsers').textContent = Math.floor(Math.random() * 10) + 1;
-                document.getElementById('currentYear').textContent = '2025';
-            }
-            
-            checkSavedUser() {
-                const savedUser = localStorage.getItem('newYearUser');
-                const savedBlessing = localStorage.getItem('newYearBlessing');
+                // 信封按钮
+                this.envelopeBtn.addEventListener('click', () => this.showLetter());
                 
-                if (savedUser && savedBlessing) {
-                    try {
-                        const user = JSON.parse(savedUser);
-                        this.currentUser = user;
-                        this.textSequence[2] = `谢谢你在我的网站跨年，${user.name}`;
-                        document.getElementById('letterRecipient').textContent = user.name;
-                        document.getElementById('letterAge').textContent = `${user.age}岁`;
-                        document.getElementById('letterContent').textContent = savedBlessing;
-                        
-                        document.getElementById('welcomeScreen').style.display = 'none';
-                        document.getElementById('mainContent').classList.add('active');
-                        this.startCountdown();
-                        this.showNotification(`欢迎回来，${user.name}！`, 'success');
-                    } catch (e) {
-                        console.log('无法加载保存的数据');
-                    }
-                }
+                // 日历按钮
+                this.calendarBtn.addEventListener('click', () => this.showCalendar());
+                
+                // 返回主页按钮
+                this.backToMainBtn.addEventListener('click', () => this.backToMain());
+                
+                // 音频启用
+                document.addEventListener('click', () => this.enableAudio(), { once: true });
+                
+                // 窗口大小变化
+                window.addEventListener('resize', () => this.handleResize());
             }
             
-            async handleUserSubmit(e) {
+            handleUserSubmit(e) {
                 e.preventDefault();
                 
-                const userName = document.getElementById('userName').value.trim();
-                const userAge = parseInt(document.getElementById('userAge').value);
+                const userName = this.userNameInput.value.trim();
+                const userAge = parseInt(this.userAgeInput.value);
                 
                 if (!userName || userAge < 1 || userAge > 120) {
                     this.showNotification('请输入有效的姓名和年龄（1-120岁）', 'error');
                     return;
                 }
                 
-                this.currentUser = { name: userName, age: userAge };
-                this.textSequence[2] = `谢谢你在我的网站跨年，${userName}`;
-                document.getElementById('letterRecipient').textContent = userName;
-                document.getElementById('letterAge').textContent = `${userAge}岁`;
+                this.currentUser = { 
+                    name: userName, 
+                    age: userAge,
+                    joined: new Date().toISOString()
+                };
                 
-                document.getElementById('loadingOverlay').classList.add('active');
+                // 保存用户信息
+                localStorage.setItem('holidayUser', JSON.stringify(this.currentUser));
                 
-                try {
-                    const blessing = await this.aiGenerator.generateBlessing(userName, userAge);
-                    document.getElementById('letterContent').textContent = blessing;
+                // 显示加载动画
+                this.showLoading('正在为您准备节日倒计时...');
+                
+                // 延迟后显示主界面
+                setTimeout(() => {
+                    this.hideLoading();
+                    this.enterMainInterface();
+                }, 1500);
+            }
+            
+            enterMainInterface() {
+                // 隐藏欢迎界面
+                this.welcomeOverlay.style.opacity = '0';
+                setTimeout(() => {
+                    this.welcomeOverlay.style.display = 'none';
                     
-                    localStorage.setItem('newYearUser', JSON.stringify(this.currentUser));
-                    localStorage.setItem('newYearBlessing', blessing);
+                    // 显示主内容
+                    this.mainContent.classList.add('active');
                     
-                    document.getElementById('loadingOverlay').classList.remove('active');
+                    // 开始倒计时
+                    this.startCountdown();
                     
-                    document.getElementById('welcomeScreen').style.opacity = '0';
-                    setTimeout(() => {
-                        document.getElementById('welcomeScreen').style.display = 'none';
-                        document.getElementById('mainContent').classList.add('active');
-                        this.startCountdown();
-                        this.showNotification(`欢迎${userName}！新年倒计时开始`, 'success');
-                    }, 400);
-                    
-                } catch (error) {
-                    const localBlessing = this.aiGenerator.createBlessing(userName, userAge);
-                    document.getElementById('letterContent').textContent = localBlessing;
-                    
-                    setTimeout(() => {
-                        document.getElementById('loadingOverlay').classList.remove('active');
-                        document.getElementById('welcomeScreen').style.opacity = '0';
-                        setTimeout(() => {
-                            document.getElementById('welcomeScreen').style.display = 'none';
-                            document.getElementById('mainContent').classList.add('active');
-                            this.startCountdown();
-                            this.showNotification(`欢迎${userName}！新年倒计时开始`, 'success');
-                        }, 400);
-                    }, 1000);
+                    // 显示欢迎通知
+                    this.showNotification(`欢迎${this.currentUser.name}！智能倒计时已启动`, 'success');
+                }, 500);
+            }
+            
+            checkSavedUser() {
+                const savedUser = localStorage.getItem('holidayUser');
+                if (savedUser) {
+                    try {
+                        this.currentUser = JSON.parse(savedUser);
+                        this.enterMainInterface();
+                    } catch (e) {
+                        console.log('加载保存的用户信息失败');
+                    }
                 }
             }
             
             startCountdown() {
-                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                if (this.countdownInterval) {
+                    clearInterval(this.countdownInterval);
+                }
+                
+                this.updateHolidayInfo();
                 this.updateCountdown();
-                this.countdownInterval = setInterval(() => this.updateCountdown(), 1000);
+                
+                this.countdownInterval = setInterval(() => {
+                    this.updateCountdown();
+                }, 1000);
+            }
+            
+            updateHolidayInfo() {
+                this.currentHoliday = this.getNextHoliday();
+                
+                if (!this.currentHoliday) return;
+                
+                const date = this.currentHoliday.date;
+                this.currentYear = date.getFullYear();
+                
+                // 更新显示
+                this.yearDisplayEl.textContent = this.currentYear;
+                this.holidayNameEl.textContent = this.currentHoliday.name;
+                
+                // 更新年份显示的颜色
+                this.yearDisplayEl.style.background = `linear-gradient(45deg, 
+                    ${this.holidayColors[this.currentHoliday.name] || '#FF3366'} 0%, 
+                    #33CCFF 50%, 
+                    #FFCC00 100%)`;
+            }
+            
+            getNextHoliday() {
+                const now = new Date();
+                let nextHoliday = null;
+                let nearestDate = null;
+                
+                // 检查未来两年的节日
+                for (let year = now.getFullYear(); year <= now.getFullYear() + 2; year++) {
+                    for (const holiday of this.holidays) {
+                        try {
+                            const holidayDate = holiday.getDate(year);
+                            
+                            // 如果节日已经过去，跳过
+                            if (holidayDate < now && year === now.getFullYear()) {
+                                continue;
+                            }
+                            
+                            // 找到最近的节日
+                            if (!nearestDate || holidayDate < nearestDate) {
+                                nearestDate = holidayDate;
+                                nextHoliday = {
+                                    ...holiday,
+                                    date: holidayDate,
+                                    displayYear: year
+                                };
+                            }
+                        } catch (error) {
+                            console.warn(`获取节日日期失败: ${holiday.name}`, error);
+                        }
+                    }
+                    
+                    // 如果今年找到了节日，就停止
+                    if (nextHoliday) break;
+                }
+                
+                // 确保一定有节日
+                if (!nextHoliday) {
+                    const nextYear = now.getFullYear() + 1;
+                    nextHoliday = {
+                        name: "元旦",
+                        type: "solar",
+                        date: new Date(nextYear, 0, 1),
+                        desc: "新的一年开始",
+                        color: "#FF3366",
+                        displayYear: nextYear
+                    };
+                }
+                
+                return nextHoliday;
             }
             
             updateCountdown() {
-                const now = this.isManualTime && this.manualDateTime ? 
-                    new Date(this.manualDateTime) : new Date();
+                if (!this.currentHoliday) return;
                 
-                if (this.isManualTime && this.manualDateTime) {
-                    this.manualDateTime = new Date(this.manualDateTime.getTime() + 1000);
-                }
-                
-                const targetTime = new Date(2026, 0, 1, 0, 0, 0);
-                const diff = targetTime - now;
+                const now = new Date();
+                const diff = this.currentHoliday.date - now;
                 
                 if (diff <= 0) {
-                    document.getElementById('days').textContent = '00';
-                    document.getElementById('hours').textContent = '00';
-                    document.getElementById('minutes').textContent = '00';
-                    document.getElementById('seconds').textContent = '00';
+                    // 节日到了！
+                    this.daysEl.textContent = '00';
+                    this.hoursEl.textContent = '00';
+                    this.minutesEl.textContent = '00';
+                    this.secondsEl.textContent = '00';
                     
-                    if (!this.fireworkActive) {
-                        this.triggerNewYearEffects();
+                    if (!this.isCelebrating) {
+                        this.startCelebration();
                     }
                     return;
                 }
                 
-                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                // 计算时间差
+                const totalSeconds = Math.floor(diff / 1000);
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
                 
-                document.getElementById('days').textContent = days.toString().padStart(2, '0');
-                document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-                document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-                document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+                // 更新显示
+                this.daysEl.textContent = days.toString().padStart(2, '0');
+                this.hoursEl.textContent = hours.toString().padStart(2, '0');
+                this.minutesEl.textContent = minutes.toString().padStart(2, '0');
+                this.secondsEl.textContent = seconds.toString().padStart(2, '0');
                 
-                if (document.getElementById('adminPanel').classList.contains('active')) {
-                    this.updateAdminTimeDisplay();
+                // 倒计时最后30秒准备庆祝
+                if (days === 0 && hours === 0 && minutes === 0 && seconds <= 30) {
+                    this.prepareCelebration();
                 }
                 
-                // 前44秒播放音频
-                if (days === 0 && hours === 0 && minutes === 0 && seconds === 44) {
-                    this.playAudio();
-                }
-                
-                if (days === 0 && hours === 0 && minutes === 0 && seconds <= 10 && seconds >= 0) {
-                    if (!this.fireworkActive) {
-                        this.triggerNewYearEffects();
-                    }
+                // 每天更新节日信息
+                if (seconds === 0 && minutes === 0 && hours === 0) {
+                    this.updateHolidayInfo();
                 }
             }
             
-            updateAdminTimeDisplay() {
-                const now = this.isManualTime && this.manualDateTime ? 
-                    new Date(this.manualDateTime) : new Date();
-                
-                const timeStr = now.toLocaleString('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                });
-                
-                document.getElementById('adminCurrentTime').textContent = timeStr;
+            prepareCelebration() {
+                // 预加载音频
+                if (!this.audioPlaying) {
+                    this.celebrationAudio.play().then(() => {
+                        this.celebrationAudio.pause();
+                        this.celebrationAudio.currentTime = 0;
+                    }).catch(() => {});
+                }
             }
             
-            prepareAudio() {
-                this.audio.volume = 0.8; // 更大音量
-                this.audio.preload = 'auto';
-                this.audio.loop = true;
+            startCelebration() {
+                if (this.isCelebrating) return;
                 
-                this.audio.addEventListener('ended', () => {
-                    this.audioPlaying = false;
-                });
+                this.isCelebrating = true;
+                
+                // 播放音乐
+                this.playCelebrationAudio();
+                
+                // 显示烟花
+                this.showFireworks(8000);
+                
+                // 显示粒子文字
+                this.showParticleText();
+                
+                // 显示庆祝信息
+                this.yearDisplayEl.textContent = '🎉';
+                this.holidayNameEl.textContent = `${this.currentHoliday.name}快乐！`;
+                
+                // 显示信封按钮
+                setTimeout(() => {
+                    this.envelopeSection.classList.add('active');
+                }, 3000);
+                
+                // 8秒后重置
+                setTimeout(() => {
+                    this.isCelebrating = false;
+                    this.startCountdown();
+                }, 8000);
             }
             
-            enableAudio() {
-                this.audio.play().then(() => {
-                    this.audio.pause();
-                    this.audio.currentTime = 0;
-                    this.audioPlaying = false;
-                }).catch(() => {});
-            }
-            
-            playAudio() {
-                if (!this.audioEnabled || this.audioPlaying) return;
+            playCelebrationAudio() {
+                if (this.audioPlaying) return;
                 
-                this.audio.currentTime = 0;
-                this.audio.play().then(() => {
+                this.celebrationAudio.currentTime = 0;
+                this.celebrationAudio.play().then(() => {
                     this.audioPlaying = true;
                 }).catch(() => {
                     this.audioPlaying = false;
                 });
+                
+                // 8秒后停止音乐
+                setTimeout(() => {
+                    this.celebrationAudio.pause();
+                    this.celebrationAudio.currentTime = 0;
+                    this.audioPlaying = false;
+                }, 8000);
             }
             
-            stopAudio() {
-                this.audio.pause();
-                this.audio.currentTime = 0;
-                this.audioPlaying = false;
-            }
-            
-            triggerNewYearEffects() {
+            showFireworks(duration) {
+                this.fireworksOverlay.classList.add('active');
                 this.fireworkActive = true;
                 
-                document.getElementById('transitionOverlay').classList.add('active');
-                document.getElementById('mainContent').classList.remove('active');
+                // 创建多个烟花
+                const fireworkCount = 12;
+                const colors = ['#FF3366', '#33CCFF', '#FFCC00', '#00CC88', '#9966FF', '#FF00FF'];
                 
-                this.playAudio();
+                for (let i = 0; i < fireworkCount; i++) {
+                    setTimeout(() => {
+                        this.createFirework(colors);
+                    }, i * 300);
+                }
                 
-                // 更震撼的粒子背景
-                particlesJS('particles-js', {
-                    particles: {
-                        number: { value: 400, density: { enable: true, value_area: 800 } },
-                        color: { value: ["#FF3366", "#33CCFF", "#FFCC00", "#00CC88", "#FF00FF", "#FF9900"] },
-                        shape: { type: "circle" },
-                        opacity: { value: 0.9, random: true, anim: { enable: true, speed: 3 } },
-                        size: { value: 5, random: true },
-                        line_linked: { enable: false },
-                        move: {
-                            enable: true, speed: 8, direction: "none",
-                            random: true, straight: false, out_mode: "out"
-                        }
+                // 持续创建烟花
+                const interval = setInterval(() => {
+                    if (this.fireworkActive) {
+                        this.createFirework(colors);
                     }
-                });
+                }, 500);
                 
+                // 停止烟花
                 setTimeout(() => {
-                    this.startTextAnimation();
-                }, 1500);
+                    clearInterval(interval);
+                    this.fireworkActive = false;
+                    setTimeout(() => {
+                        this.fireworksOverlay.classList.remove('active');
+                        this.fireworksOverlay.innerHTML = '';
+                    }, 1500);
+                }, duration);
             }
             
-            startTextAnimation() {
-                document.getElementById('particleTextContainer').classList.add('active');
-                this.particleText.setTexts(this.textSequence);
+            createFirework(colors) {
+                const particleCount = 60;
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight * 0.7;
+                const color = colors[Math.floor(Math.random() * colors.length)];
                 
-                this.fireworkSystem.startFireworks();
-            }
-            
-            showLetter() {
-                document.getElementById('particleTextContainer').classList.remove('active');
-                document.getElementById('envelopeContainer').classList.remove('active');
-                document.getElementById('transitionOverlay').classList.remove('active');
-                this.fireworkSystem.stopFireworks();
-                
-                document.getElementById('letterContainer').classList.add('active');
-                setTimeout(() => {
-                    document.getElementById('letter').classList.add('active');
-                    this.showNotification('请查收您的新年祝福', 'success');
-                }, 100);
-            }
-            
-            closeLetter() {
-                document.getElementById('letter').classList.remove('active');
-                setTimeout(() => {
-                    document.getElementById('letterContainer').classList.remove('active');
-                    this.showCalendar();
-                }, 400);
-            }
-            
-            loadHolidaysData() {
-                this.holidaysData = [
-                    { name: "元旦", date: "1月1日（星期四）", desc: "放假3天（1月1日-1月3日）", color: "#FF3366" },
-                    { name: "春节", date: "2月17日（星期二，正月初一）", desc: "放假7天（2月15日-2月21日）", color: "#FFCC00" },
-                    { name: "清明节", date: "4月4日（星期六）", desc: "放假3天（4月4日-4月6日）", color: "#00CC88" },
-                    { name: "劳动节", date: "5月1日（星期五）", desc: "放假5天（5月1日-5月5日）", color: "#33CCFF" },
-                    { name: "端午节", date: "6月20日（星期六，五月初五）", desc: "放假3天（6月20日-6月22日）", color: "#9966FF" },
-                    { name: "中秋节", date: "10月6日（星期二，八月十五）", desc: "与国庆节连休", color: "#FF9933" },
-                    { name: "国庆节", date: "10月1日（星期四）", desc: "放假7天（10月1日-10月7日）", color: "#FF3366" }
-                ];
-            }
-            
-            showCalendar() {
-                const holidayGrid = document.getElementById('holidayGrid');
-                holidayGrid.innerHTML = '';
-                
-                this.holidaysData.forEach(holiday => {
-                    const card = document.createElement('div');
-                    card.className = 'holiday-card';
-                    card.innerHTML = `
-                        <div style="color: ${holiday.color}; font-size: 2rem; margin-bottom: 20px;">
-                            <i class="fas fa-star"></i> ${holiday.name}
-                        </div>
-                        <div style="color: #33CCFF; margin-bottom: 15px; font-size: 1.4rem;">
-                            <i class="far fa-calendar-alt"></i> ${holiday.date}
-                        </div>
-                        <div style="color: rgba(255, 255, 255, 0.95); font-size: 1.2rem; line-height: 1.8;">
-                            ${holiday.desc}
-                        </div>
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'firework-particle';
+                    
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 200 + 50;
+                    const endX = Math.cos(angle) * distance;
+                    const endY = Math.sin(angle) * distance;
+                    const size = Math.random() * 6 + 2;
+                    const duration = Math.random() * 0.8 + 0.8;
+                    
+                    particle.style.cssText = `
+                        --start-x: 0px;
+                        --start-y: 0px;
+                        --end-x: ${endX}px;
+                        --end-y: ${endY}px;
+                        background: ${color};
+                        left: ${x}px;
+                        top: ${y}px;
+                        width: ${size}px;
+                        height: ${size}px;
+                        animation-duration: ${duration}s;
                     `;
-                    holidayGrid.appendChild(card);
-                });
-                
-                document.getElementById('calendarContainer').classList.add('active');
+                    
+                    this.fireworksOverlay.appendChild(particle);
+                    
+                    // 移除动画完成的元素
+                    setTimeout(() => {
+                        if (particle.parentNode === this.fireworksOverlay) {
+                            particle.remove();
+                        }
+                    }, duration * 1000);
+                }
             }
             
-            backToMain() {
-                this.stopAudio();
-                this.fireworkActive = false;
+            showParticleText() {
+                this.particleTextContainer.classList.add('active');
                 
-                document.getElementById('calendarContainer').classList.remove('active');
-                document.getElementById('mainContent').classList.add('active');
-                document.getElementById('yearDisplay').textContent = '2026';
+                // 初始化粒子文字系统
+                if (!this.particleSystem) {
+                    this.initParticleTextSystem();
+                }
                 
-                this.startCountdown();
-                this.showNotification('欢迎来到2026年！新年快乐！', 'success');
-            }
-            
-            showAdminPanel() {
-                document.getElementById('adminPanel').classList.add('active');
-                this.updateAdminTimeDisplay();
+                const currentYear = this.currentHoliday.displayYear;
+                const nextYear = currentYear + 1;
+                const userName = this.currentUser?.name || '朋友';
                 
-                this.adminTimeInterval = setInterval(() => {
-                    this.updateAdminTimeDisplay();
+                const texts = [
+                    `辞去${currentYear}，迎接${nextYear}`,
+                    `希望在新的一年里你能成为更好的自己`,
+                    `我们 ${nextYear} 年 1 月 1 日零时再见`
+                ];
+                
+                // 显示粒子文字
+                setTimeout(() => {
+                    this.particleSystem.setTexts(texts);
                 }, 1000);
             }
             
-            closeAdminPanel() {
-                document.getElementById('adminPanel').classList.remove('active');
-                if (this.adminTimeInterval) {
-                    clearInterval(this.adminTimeInterval);
-                }
+            initParticleTextSystem() {
+                // 简化的粒子文字系统
+                const canvas = document.getElementById('particle-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                this.particleSystem = {
+                    particles: [],
+                    texts: [],
+                    currentTextIndex: 0,
+                    isAnimating: false,
+                    
+                    setTexts: function(texts) {
+                        this.texts = texts;
+                        this.currentTextIndex = 0;
+                        this.startAnimation();
+                    },
+                    
+                    startAnimation: function() {
+                        if (this.currentTextIndex >= this.texts.length) {
+                            setTimeout(() => {
+                                document.getElementById('envelopeSection').classList.add('active');
+                            }, 2000);
+                            return;
+                        }
+                        
+                        this.isAnimating = true;
+                        this.animate();
+                    },
+                    
+                    animate: function() {
+                        if (!this.isAnimating) return;
+                        
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        
+                        // 简化的粒子动画
+                        requestAnimationFrame(() => this.animate());
+                    }
+                };
+                
+                window.addEventListener('resize', () => {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                });
             }
             
-            // 设置时间并返回主页
-            setManualTimeAndReturn() {
-                const year = parseInt(document.getElementById('adminYear').value) || 2025;
-                const month = parseInt(document.getElementById('adminMonth').value) - 1 || 11;
-                const day = parseInt(document.getElementById('adminDay').value) || 31;
-                const hour = parseInt(document.getElementById('adminHour').value) || 23;
-                const minute = parseInt(document.getElementById('adminMinute').value) || 59;
-                const second = parseInt(document.getElementById('adminSecond').value) || 59;
+            showLetter() {
+                this.hideEnvelope();
                 
-                this.manualDateTime = new Date(year, month, day, hour, minute, second);
-                this.isManualTime = true;
-                this.fireworkActive = false;
+                // 显示加载动画
+                this.showLoading('AI正在为您生成节日祝福...');
                 
-                // 关闭管理员面板
-                this.closeAdminPanel();
-                
-                // 返回主页
-                this.returnToMain();
-                
-                this.showNotification(`时间已设置为 ${year}年${month+1}月${day}日 ${hour}:${minute}:${second}`, 'success');
-                
-                // 如果设置到23:59:40，计算音频播放时间
-                if (hour === 23 && minute === 59 && second === 40) {
-                    setTimeout(() => this.playAudio(), 4000);
-                } else if (hour === 23 && minute === 59 && second < 44) {
-                    const timeTo44 = 44 - second;
-                    setTimeout(() => this.playAudio(), timeTo44 * 1000);
-                }
-            }
-            
-            // 重置时间并返回主页
-            resetTimeAndReturn() {
-                this.isManualTime = false;
-                this.manualDateTime = null;
-                this.fireworkActive = false;
-                
-                // 关闭管理员面板
-                this.closeAdminPanel();
-                
-                // 返回主页
-                this.returnToMain();
-                
-                this.showNotification('已恢复真实时间', 'info');
-            }
-            
-            // 触发特效并返回主页
-            triggerNewYearEffectsFromAdmin() {
-                // 关闭管理员面板
-                this.closeAdminPanel();
-                
-                // 返回主页
-                this.returnToMain();
-                
-                // 触发特效
+                // 模拟AI生成祝福
                 setTimeout(() => {
-                    this.triggerNewYearEffects();
-                }, 500);
-                
-                this.showNotification('触发新年特效', 'info');
+                    this.hideLoading();
+                    
+                    // 更新收件人信息
+                    this.letterRecipientEl.textContent = this.currentUser.name;
+                    this.letterAgeEl.textContent = `${this.currentUser.age}岁`;
+                    
+                    // 生成祝福语
+                    this.generateBlessing();
+                    
+                    // 显示贺卡
+                    this.letterOverlay.classList.add('active');
+                    setTimeout(() => {
+                        this.letterContainer.classList.add('active');
+                    }, 100);
+                    
+                    this.showNotification('您的专属节日祝福已生成', 'success');
+                }, 2000);
             }
             
-            // 返回主页的通用方法
-            returnToMain() {
-                // 停止所有特效
-                this.stopAudio();
-                this.fireworkActive = false;
-                this.fireworkSystem.stopFireworks();
+            generateBlessing() {
+                const templates = [
+                    `亲爱的${this.currentUser.name}，${this.currentUser.age}岁的你正处在美好的年华。在这${this.currentHoliday.name}到来之际，愿温暖的阳光照亮你的前程，愿和煦的春风吹散你的烦恼。新的一年，愿你心中有爱，眼中有光，脚下有路。愿你的每一天都充满欢笑，每一步都走向辉煌。${this.currentHoliday.name}快乐！`,
+                    
+                    `致${this.currentUser.age}岁的${this.currentUser.name}：${this.currentHoliday.name}的钟声即将敲响，愿这钟声带走所有不如意，带来无限好运。愿你像春天的花朵般绽放美丽，像夏日的阳光般热情奔放，像秋天的果实般硕果累累，像冬日的雪花般纯洁美好。新的一年，愿你梦想成真，万事如意！`,
+                    
+                    `${this.currentUser.name}，${this.currentUser.age}岁${this.currentHoliday.name}快乐！在这辞旧迎新的时刻，愿你卸下过往的疲惫，拥抱崭新的希望。愿你的生活如诗如画，愿你的未来如星辰大海般璀璨。愿健康常伴你左右，愿快乐永驻你心间。让我们一起迎接美好的${this.currentHoliday.name}，开启全新的旅程！`
+                ];
                 
-                // 关闭所有特效层
-                document.getElementById('transitionOverlay').classList.remove('active');
-                document.getElementById('particleTextContainer').classList.remove('active');
-                document.getElementById('envelopeContainer').classList.remove('active');
+                const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+                this.letterContentEl.textContent = randomTemplate;
+            }
+            
+            showCalendar() {
+                // 隐藏贺卡
+                this.letterContainer.classList.remove('active');
+                setTimeout(() => {
+                    this.letterOverlay.classList.remove('active');
+                    
+                    // 显示日历
+                    this.calendarOverlay.classList.add('active');
+                    this.renderHolidayCalendar();
+                }, 400);
+            }
+            
+            renderHolidayCalendar() {
+                this.holidayGrid.innerHTML = '';
                 
-                // 关闭其他界面
-                document.getElementById('letterContainer').classList.remove('active');
-                document.getElementById('letter').classList.remove('active');
-                document.getElementById('calendarContainer').classList.remove('active');
+                const now = new Date();
+                const currentYear = now.getFullYear();
                 
-                // 显示主界面
-                document.getElementById('mainContent').classList.add('active');
+                // 显示今年和明年的节日
+                for (let year = currentYear; year <= currentYear + 1; year++) {
+                    this.holidays.forEach(holiday => {
+                        try {
+                            const holidayDate = holiday.getDate(year);
+                            this.createHolidayCard(holiday, holidayDate);
+                        } catch (error) {
+                            console.warn(`创建节日卡片失败: ${holiday.name}`, error);
+                        }
+                    });
+                }
+            }
+            
+            createHolidayCard(holiday, date) {
+                const card = document.createElement('div');
+                card.className = 'holiday-card';
+                card.style.setProperty('--holiday-color', holiday.color || '#FFCC00');
                 
-                // 恢复正常的粒子背景
-                this.initParticles();
+                const year = date.getFullYear();
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+                const weekday = weekdays[date.getDay()];
                 
-                // 重启倒计时
-                this.startCountdown();
+                // 检查是否是当前倒计时的节日
+                const isCurrent = this.currentHoliday && 
+                                this.currentHoliday.name === holiday.name && 
+                                date.getTime() === this.currentHoliday.date.getTime();
+                
+                if (isCurrent) {
+                    card.style.borderColor = '#FFCC00';
+                    card.style.boxShadow = '0 0 50px rgba(255, 204, 0, 0.5)';
+                }
+                
+                card.innerHTML = `
+                    <div class="holiday-card-icon">${holiday.icon}</div>
+                    <h3 class="holiday-card-title">${holiday.name}</h3>
+                    <div class="holiday-card-date">
+                        <i class="far fa-calendar-alt"></i>
+                        ${year}年${month}月${day}日（星期${weekday}）
+                    </div>
+                    <div class="holiday-card-desc">
+                        ${holiday.desc}
+                        <div style="margin-top: 15px; color: #FF9966; font-weight: 600;">
+                            ${holiday.duration}
+                        </div>
+                    </div>
+                `;
+                
+                this.holidayGrid.appendChild(card);
+            }
+            
+            backToMain() {
+                // 隐藏日历
+                this.calendarOverlay.classList.remove('active');
+                
+                // 显示主内容
+                setTimeout(() => {
+                    this.mainContent.classList.add('active');
+                    this.startCountdown();
+                    
+                    this.showNotification('已返回主页，继续节日倒计时', 'info');
+                }, 300);
+            }
+            
+            hideEnvelope() {
+                this.envelopeSection.classList.remove('active');
+                this.particleTextContainer.classList.remove('active');
+            }
+            
+            showLoading(text) {
+                this.loadingText.textContent = text;
+                this.loadingOverlay.classList.add('active');
+            }
+            
+            hideLoading() {
+                this.loadingOverlay.classList.remove('active');
             }
             
             showNotification(message, type = 'info') {
-                const notification = document.getElementById('notification');
-                const text = document.getElementById('notificationText');
-                
-                text.textContent = message;
-                
                 const colors = {
                     error: 'linear-gradient(135deg, #FF3366, #FF0033)',
                     success: 'linear-gradient(135deg, #00CC88, #009955)',
@@ -2063,18 +2602,84 @@
                     info: 'linear-gradient(135deg, #33CCFF, #0099CC)'
                 };
                 
-                notification.style.background = colors[type] || colors.info;
-                notification.classList.add('show');
+                this.notification.style.background = colors[type] || colors.info;
+                this.notificationText.textContent = message;
+                this.notification.classList.add('show');
                 
                 setTimeout(() => {
-                    notification.classList.remove('show');
-                }, 3000);
+                    this.notification.classList.remove('show');
+                }, 3500);
+            }
+            
+            prepareAudio() {
+                this.celebrationAudio.volume = 0.7;
+                this.celebrationAudio.preload = 'auto';
+            }
+            
+            enableAudio() {
+                this.celebrationAudio.play().then(() => {
+                    this.celebrationAudio.pause();
+                    this.celebrationAudio.currentTime = 0;
+                }).catch(() => {});
+            }
+            
+            preloadEffects() {
+                // 预创建一些烟花粒子
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'firework-particle';
+                    particle.style.opacity = '0';
+                    this.fireworksOverlay.appendChild(particle);
+                }
+                
+                // 预加载一些星星
+                setTimeout(() => {
+                    for (let i = 0; i < 50; i++) {
+                        const star = document.createElement('div');
+                        star.className = 'star';
+                        star.style.left = `${Math.random() * 100}%`;
+                        star.style.top = `${Math.random() * 100}%`;
+                        star.style.width = star.style.height = `${Math.random() * 2 + 1}px`;
+                        star.style.opacity = '0';
+                        this.universe.appendChild(star);
+                    }
+                }, 500);
+            }
+            
+            handleResize() {
+                // 更新粒子文字画布
+                const canvas = document.getElementById('particle-canvas');
+                if (canvas) {
+                    canvas.width = window.innerWidth;
+                    canvas.height = window.innerHeight;
+                }
             }
         }
-
-        // 启动应用程序
+        
+        // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', () => {
-            window.app = new NewYearApp();
+            // 防止右键菜单
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            
+            // 防止选择文字
+            document.addEventListener('selectstart', e => e.preventDefault());
+            
+            // 防止F12等开发者工具
+            document.addEventListener('keydown', e => {
+                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) {
+                    e.preventDefault();
+                }
+            });
+            
+            // 初始化应用
+            const app = new CompleteHolidayCountdown();
+            window.holidayApp = app;
+            
+            // 显示欢迎信息
+            console.log('%c🎉 智能节日倒计时系统已启动 🎉', 
+                'color: #FF3366; font-size: 18px; font-weight: bold; text-shadow: 0 0 10px rgba(255,51,102,0.5);');
+            console.log('%c系统功能：智能节日检测、动态倒计时、特效庆祝、AI祝福生成', 
+                'color: #33CCFF; font-size: 14px;');
         });
     </script>
 </body>
